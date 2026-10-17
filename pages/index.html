@@ -116,7 +116,12 @@
                 <p id="receive-text" class="muted">…</p>
                 <div class="row">
                     <button type="button" id="receive-toggle">게임 PC 입력 받기 켜기</button>
+                    <button type="button" id="allow-public" hidden>공용에서도 받기</button>
                     <button type="button" class="secondary" id="network-settings" hidden>네트워크 설정 열기</button>
+                </div>
+                <div class="row" id="public-note" hidden>
+                    <span class="muted">공용 네트워크에서도 받는 중이에요.</span>
+                    <button type="button" class="secondary" id="disallow-public">공용에서는 받지 않기</button>
                 </div>
                 <ul class="peer-list" id="paired-list"></ul>
             </div>
@@ -349,7 +354,10 @@
         function renderReceive(receive) {
             var text = $('receive-text');
             var toggle = $('receive-toggle');
-            $('network-settings').hidden = !(receive && receive.problem === 'public-network');
+            var onPublic = !!(receive && receive.on && receive.problem === 'public-network');
+            $('network-settings').hidden = !onPublic;
+            $('allow-public').hidden = !onPublic;
+            $('public-note').hidden = !(receive && receive.on && receive.allowPublic);
             toggle.disabled = !receive;
             if (!receive) {
                 setText(text, 'KbmOverlay와 연결되면 보여요.');
@@ -363,7 +371,9 @@
             if (!receive.on) {
                 setText(text, '꺼져 있어요. 켜면 같은 공유기의 게임 PC가 이 PC를 찾을 수 있어요. 처음 켤 때 Windows가 방화벽 허용을 위해 관리자 권한을 한 번 물어요.');
             } else if (receive.problem === 'public-network') {
-                setText(text, "이 PC의 네트워크가 '공용'이라 게임 PC가 접속할 수 없어요. Windows 설정에서 '개인'으로 바꾸면 바로 켜져요.", 'warn');
+                setText(text, "이 PC의 네트워크가 '공용'이라 게임 PC가 접속할 수 없어요. " +
+                    "'공용에서도 받기'를 누르면 KbmOverlay만 허용해서 받을 수 있어요 (포트 " + receive.port + "만, 같은 네트워크에서만, 관리자 권한을 한 번 물어요). " +
+                    "Windows 설정에서 네트워크를 '개인'으로 바꿔도 돼요.", 'warn');
             } else if (receive.problem === 'firewall-needed') {
                 setText(text, '방화벽 허용이 필요해요. 아래 버튼을 누르고 Windows가 물으면 "예"를 눌러 주세요.', 'warn');
             } else if (receive.problem === 'firewall-failed') {
@@ -433,6 +443,8 @@
             connection.send({ cmd: 'receive', on: !receive.on || firewallProblem });
         });
         $('network-settings').addEventListener('click', function () { connection.send({ cmd: 'networkSettings' }); });
+        $('allow-public').addEventListener('click', function () { connection.send({ cmd: 'allowPublic', on: true }); });
+        $('disallow-public').addEventListener('click', function () { connection.send({ cmd: 'allowPublic', on: false }); });
         $('approve').addEventListener('click', function () {
             connection.send({ cmd: 'approve', id: lastRelay.receive.pending.id });
         });

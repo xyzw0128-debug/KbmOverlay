@@ -21,8 +21,9 @@ namespace KbmOverlay
             string exePath = Assembly.GetExecutingAssembly().Location;
 
             // Elevated helper started by the streaming PC side; see Relay/Firewall.cs.
-            if (args.Length == 2 && args[0] == "--firewall-setup" && int.TryParse(args[1], out int firewallPort))
-                return Firewall.Setup(exePath, firewallPort);
+            if ((args.Length == 2 || (args.Length == 3 && args[2] == "public")) &&
+                args[0] == "--firewall-setup" && int.TryParse(args[1], out int firewallPort))
+                return Firewall.Setup(exePath, firewallPort, args.Length == 3);
 
             try { Console.OutputEncoding = Encoding.UTF8; } catch (IOException) { }
             Console.Title = "KbmOverlay";
@@ -32,15 +33,21 @@ namespace KbmOverlay
             {
                 Firewall.Status status = Firewall.Check(exePath, RelayManager.DefaultPort);
                 Console.WriteLine("exe: " + exePath);
-                Console.WriteLine("TCP " + RelayManager.DefaultPort + " 허용: " + (status.AllowTcp ? "예" : "아니오"));
-                Console.WriteLine("UDP " + RelayManager.DefaultPort + " 허용: " + (status.AllowUdp ? "예" : "아니오"));
-                Console.WriteLine("이 exe를 막는 규칙: " + (status.Blocked ? "있음" : "없음"));
+                Console.WriteLine("포트 " + RelayManager.DefaultPort + " 허용 (TCP / UDP / 이 exe 차단 규칙)");
+                foreach (var profile in new[] { (Firewall.ProfilePrivate, "개인"), (Firewall.ProfileDomain, "도메인"), (Firewall.ProfilePublic, "공용") })
+                {
+                    Console.WriteLine("  " + profile.Item2 + ": " +
+                                      ((status.TcpProfiles & profile.Item1) != 0 ? "예" : "아니오") + " / " +
+                                      ((status.UdpProfiles & profile.Item1) != 0 ? "예" : "아니오") + " / " +
+                                      ((status.BlockedProfiles & profile.Item1) != 0 ? "있음" : "없음"));
+                }
                 Console.WriteLine("공용 네트워크만 연결됨: " + (Firewall.OnlyPublicNetwork() ? "예" : "아니오"));
                 return 0;
             }
 
             int? port = null;
             int dev = 0;
+            bool devPublic = false;
             bool export = false;
             for (int i = 0; i < args.Length; i++)
             {
@@ -59,6 +66,10 @@ namespace KbmOverlay
                     // Development: several instances on one PC, relay on loopback only, no firewall changes.
                     dev = d;
                     i++;
+                }
+                else if (arg == "--dev-public")
+                {
+                    devPublic = true; // with --dev: pretend this PC is on a "Public" network
                 }
                 else
                 {
@@ -88,11 +99,11 @@ namespace KbmOverlay
                     WaitBeforeClose();
                     return 1;
                 }
-                return Run(port ?? DefaultPort + 10 * dev, dev, exePath, pages, version);
+                return Run(port ?? DefaultPort + 10 * dev, dev, devPublic, exePath, pages, version);
             }
         }
 
-        private static int Run(int port, int dev, string exePath, PageStore pages, string version)
+        private static int Run(int port, int dev, bool devPublic, string exePath, PageStore pages, string version)
         {
             bool elevated;
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
@@ -111,7 +122,7 @@ namespace KbmOverlay
             if (dev != 0)
                 for (int other = 1; other <= 9; other++)
                     if (other != dev) devProbes.Add(new IPEndPoint(IPAddress.Loopback, RelayManager.DefaultPort + 10 * other));
-            var relay = new RelayManager(settings, hub, exePath, RelayManager.DefaultPort + 10 * dev, dev != 0, devProbes);
+            var relay = new RelayManager(settings, hub, exePath, RelayManager.DefaultPort + 10 * dev, dev != 0, devPublic, devProbes);
 
             try
             {

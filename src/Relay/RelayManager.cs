@@ -18,12 +18,14 @@ namespace KbmOverlay.Relay
         private readonly RelayReceiver receiver;
         private readonly RelaySender sender;
 
-        public RelayManager(Settings settings, InputHub hub, string exePath, int port, bool dev, List<IPEndPoint> devProbes)
+        public RelayManager(Settings settings, InputHub hub, string exePath, int port, bool dev, bool devPublic, List<IPEndPoint> devProbes)
         {
             this.settings = settings;
             this.hub = hub;
-            // Dev instances (several on one PC for testing) stay on loopback and skip the firewall.
-            receiver = new RelayReceiver(settings, hub, port, dev ? IPAddress.Loopback : IPAddress.Any, exePath, !dev, Changed);
+            // Dev instances (several on one PC for testing) stay on loopback and skip the firewall;
+            // devPublic pretends the network is "Public" to test that path.
+            Func<bool> onlyPublic = dev ? () => devPublic : (Func<bool>)Firewall.OnlyPublicNetwork;
+            receiver = new RelayReceiver(settings, hub, port, dev ? IPAddress.Loopback : IPAddress.Any, exePath, !dev, onlyPublic, Changed);
             sender = new RelaySender(settings, hub, DefaultPort, !dev, devProbes, Changed);
             hub.RelayStatus = StatusJson;
         }
@@ -86,6 +88,9 @@ namespace KbmOverlay.Relay
                 {
                     case "receive":
                         receiver.SetEnabled(Json.Bool(command, "on") ?? false, true);
+                        break;
+                    case "allowPublic":
+                        receiver.SetAllowPublic(Json.Bool(command, "on") ?? false);
                         break;
                     case "approve":
                         receiver.Decide(Json.Str(command, "id"), true);

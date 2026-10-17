@@ -29,6 +29,7 @@ namespace KbmOverlay
 
         public string Id;              // this PC's id, sent to other PCs
         public bool Receive;           // this PC accepts input from game PCs
+        public bool AllowPublic;       // ...also while connected to a "Public" network
         public readonly List<Peer> Senders = new List<Peer>();  // game PCs allowed to send here
         public Peer Receiver;          // streaming PC this PC sends to
 
@@ -49,6 +50,7 @@ namespace KbmOverlay
                     Dictionary<string, object> root = Json.Parse(File.ReadAllText(settings.path, Encoding.UTF8));
                     settings.Id = Json.Str(root, "id");
                     settings.Receive = Json.Bool(root, "receive") ?? false;
+                    settings.AllowPublic = Json.Bool(root, "allowPublic") ?? false;
                     foreach (object item in Json.Array(root, "senders") ?? new object[0])
                     {
                         Peer peer = ReadPeer(item as Dictionary<string, object>);
@@ -79,6 +81,7 @@ namespace KbmOverlay
             {
                 ["id"] = Id,
                 ["receive"] = Receive,
+                ["allowPublic"] = AllowPublic,
                 ["senders"] = senders,
                 ["receiver"] = Receiver == null ? null : WritePeer(Receiver)
             };

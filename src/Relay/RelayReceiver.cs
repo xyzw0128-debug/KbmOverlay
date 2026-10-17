@@ -49,6 +49,7 @@ namespace KbmOverlay.Relay
         private readonly IPAddress bindAddress;
         private readonly string exePath;
         private readonly bool manageFirewall;
+        private readonly Func<bool> onlyPublicNetwork;
         private readonly Action changed;
 
         private readonly object gate = new object();
@@ -62,7 +63,9 @@ namespace KbmOverlay.Relay
         public string Problem { get; private set; }
         public bool Listening { get; private set; }
 
-        public RelayReceiver(Settings settings, InputHub hub, int port, IPAddress bindAddress, string exePath, bool manageFirewall, Action changed)
+        // onlyPublicNetwork: Firewall.OnlyPublicNetwork, or a stand-in for development instances.
+        public RelayReceiver(Settings settings, InputHub hub, int port, IPAddress bindAddress, string exePath, bool manageFirewall,
+                             Func<bool> onlyPublicNetwork, Action changed)
         {
             this.settings = settings;
             this.hub = hub;
@@ -70,6 +73,7 @@ namespace KbmOverlay.Relay
             this.bindAddress = bindAddress;
             this.exePath = exePath;
             this.manageFirewall = manageFirewall;
+            this.onlyPublicNetwork = onlyPublicNetwork;
             this.changed = changed;
         }
 
@@ -78,12 +82,38 @@ namespace KbmOverlay.Relay
         // userAction: true when the user just pressed "받기 켜기", so asking for UAC is expected.
         public void SetEnabled(bool on, bool userAction)
         {
-            int myGeneration;
             lock (settings)
             {
                 settings.Receive = on;
                 settings.Save();
             }
+            if (!on) Log.Info("  투컴 받기를 껐어요.");
+            Restart(userAction);
+        }
+
+        // "공용에서도 받기": also accept game PCs while every network is "Public". The firewall rules
+        // get the Public profile too (still this exe, this port, local subnet only). Always a user action.
+        public void SetAllowPublic(bool on)
+        {
+            bool receive;
+            lock (settings)
+            {
+                settings.AllowPublic = on;
+                settings.Save();
+                receive = settings.Receive;
+            }
+            Log.Info(on
+                ? "  공용 네트워크에서도 게임 PC 연결을 받도록 바꿨어요 (KbmOverlay만, 포트 " + port + "만, 같은 네트워크에서만)."
+                : "  공용 네트워크에서는 게임 PC 연결을 받지 않도록 바꿨어요.");
+            if (receive) Restart(true);
+            else changed();
+        }
+
+        private void Restart(bool userAction)
+        {
+            bool on;
+            int myGeneration;
+            lock (settings) on = settings.Receive;
             lock (gate)
             {
                 myGeneration = ++generation;
@@ -97,48 +127,56 @@ namespace KbmOverlay.Relay
                 thread.Name = "RelayStart";
                 thread.Start();
             }
-            else
-            {
-                Log.Info("  투컴 받기를 껐어요.");
-            }
             changed();
         }
 
         private void StartListening(int myGeneration, bool userAction)
         {
+            bool allowPublic;
+            lock (settings) allowPublic = settings.AllowPublic;
+            int required = Firewall.ProfileDomain | Firewall.ProfilePrivate | (allowPublic ? Firewall.ProfilePublic : 0);
+
             bool announcedPublic = false;
             while (true)
             {
                 try
                 {
-                    if (manageFirewall && Firewall.OnlyPublicNetwork())
+                    if (!allowPublic && onlyPublicNetwork())
                     {
                         if (!SetProblem(myGeneration, "public-network")) return;
                         if (!announcedPublic)
                         {
                             announcedPublic = true;
-                            Log.Warn("  [!] 이 PC의 네트워크가 '공용'으로 되어 있어서 게임 PC가 접속할 수 없어요.");
-                            Log.Warn("      Windows 설정 > 네트워크 및 인터넷에서 연결된 네트워크를 '개인'으로 바꿔 주세요.");
+                            Log.Warn("  [!] 이 PC의 네트워크가 '공용'이라서 게임 PC가 접속할 수 없어요. 둘 중 하나를 해 주세요.");
+                            Log.Warn("      - 설정 페이지에서 '공용에서도 받기'를 눌러요 (KbmOverlay만 허용).");
+                            Log.Warn("      - Windows 설정 > 네트워크 및 인터넷에서 연결된 네트워크를 '개인'으로 바꿔요.");
                         }
                         Thread.Sleep(5000); // start as soon as it becomes private
                         continue;
                     }
 
-                    if (manageFirewall && !Firewall.Check(exePath, port).Ready)
+                    if (manageFirewall)
                     {
-                        if (!userAction)
+                        Firewall.Status status = Firewall.Check(exePath, port);
+                        bool tooNarrow = !status.Covers(required);
+                        // Turning "공용에서도 받기" off should also take Public out of our rules.
+                        bool tooWide = !allowPublic && (status.OwnRuleProfiles & Firewall.ProfilePublic) != 0;
+                        if (tooNarrow || (tooWide && userAction))
                         {
-                            SetProblem(myGeneration, "firewall-needed");
-                            Log.Warn("  [!] 투컴 받기에 필요한 방화벽 허용이 없어요. 설정 페이지에서 '게임 PC 입력 받기'를 다시 눌러 주세요.");
-                            return;
-                        }
-                        Log.Info("  방화벽에 KbmOverlay를 허용하는 중이에요. Windows가 관리자 권한을 물으면 '예'를 눌러 주세요.");
-                        string error = Firewall.RunElevatedSetup(exePath, port);
-                        if (error != null)
-                        {
-                            SetProblem(myGeneration, "firewall-failed");
-                            Log.Error("  " + error + " 투컴 받기를 켜지 못했어요.");
-                            return;
+                            if (!userAction)
+                            {
+                                SetProblem(myGeneration, "firewall-needed");
+                                Log.Warn("  [!] 투컴 받기에 필요한 방화벽 허용이 없어요. 설정 페이지에서 '게임 PC 입력 받기'를 다시 눌러 주세요.");
+                                return;
+                            }
+                            Log.Info("  방화벽 규칙을 바꾸는 중이에요. Windows가 관리자 권한을 물으면 '예'를 눌러 주세요.");
+                            string error = Firewall.RunElevatedSetup(exePath, port, allowPublic);
+                            if (error != null)
+                            {
+                                SetProblem(myGeneration, "firewall-failed");
+                                Log.Error("  " + error + " 투컴 받기를 켜지 못했어요.");
+                                return;
+                            }
                         }
                     }
                 }
@@ -260,6 +298,7 @@ namespace KbmOverlay.Relay
                 return new Dictionary<string, object>
                 {
                     ["on"] = settings.Receive,
+                    ["allowPublic"] = settings.AllowPublic,
                     ["listening"] = Listening,
                     ["problem"] = Problem,
                     ["port"] = port,

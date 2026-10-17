@@ -10,16 +10,17 @@ namespace KbmOverlay.Relay
     // ("--firewall-setup <port>"), so the program itself never runs elevated for this.
     //
     // The rules allow only this exe, only the relay port (TCP and UDP), only from the local subnet,
-    // and only on Private/Domain networks. Adding them before the first listen also keeps Windows
-    // from showing its own firewall popup, which creates Block rules when it is cancelled.
+    // and only on Private/Domain networks, plus Public ones if the user chose "공용에서도 받기".
+    // Adding them before the first listen also keeps Windows from showing its own firewall popup,
+    // which creates Block rules when it is cancelled.
     internal static class Firewall
     {
         public const string RuleTcp = "KbmOverlay 투컴 받기 (TCP)";
         public const string RuleUdp = "KbmOverlay 투컴 받기 (UDP)";
 
-        private const int ProfileDomain = 1;
-        private const int ProfilePrivate = 2;
-        private const int ProfilePublic = 4;
+        public const int ProfileDomain = 1;
+        public const int ProfilePrivate = 2;
+        public const int ProfilePublic = 4;
         private const int DirectionIn = 1;
         private const int ActionBlock = 0;
         private const int ActionAllow = 1;
@@ -27,15 +28,19 @@ namespace KbmOverlay.Relay
         private const int ProtocolUdp = 17;
         private const int ProtocolAny = 256;
 
+        // Network profiles (bit masks) for which inbound rules on this exe allow or block the port.
         public sealed class Status
         {
-            public bool AllowTcp;
-            public bool AllowUdp;
-            public bool Blocked;
-            public bool Ready => AllowTcp && AllowUdp && !Blocked;
+            public int TcpProfiles;
+            public int UdpProfiles;
+            public int BlockedProfiles;
+            public int OwnRuleProfiles; // profiles of the two rules this program made
+
+            public bool Covers(int profiles) =>
+                (TcpProfiles & profiles) == profiles && (UdpProfiles & profiles) == profiles && (BlockedProfiles & profiles) == 0;
         }
 
-        // True when every connected network is "Public", where the rules do not apply.
+        // True when every connected network is "Public".
         public static bool OnlyPublicNetwork()
         {
             dynamic policy = Policy();
@@ -52,24 +57,27 @@ namespace KbmOverlay.Relay
                 string application = rule.ApplicationName;
                 if (application == null || !SamePath(application, exePath)) continue;
                 if ((int)rule.Direction != DirectionIn || !(bool)rule.Enabled) continue;
-                if (((int)rule.Profiles & (ProfileDomain | ProfilePrivate)) == 0) continue;
+                int profiles = rule.Profiles;
+                string name = rule.Name;
+                if (name == RuleTcp || name == RuleUdp) status.OwnRuleProfiles |= profiles;
 
                 if ((int)rule.Action == ActionBlock)
                 {
-                    status.Blocked = true;
+                    status.BlockedProfiles |= profiles;
                     continue;
                 }
                 if ((int)rule.Action != ActionAllow || !PortMatches((string)rule.LocalPorts, port)) continue;
                 int protocol = rule.Protocol;
-                if (protocol == ProtocolTcp || protocol == ProtocolAny) status.AllowTcp = true;
-                if (protocol == ProtocolUdp || protocol == ProtocolAny) status.AllowUdp = true;
+                if (protocol == ProtocolTcp || protocol == ProtocolAny) status.TcpProfiles |= profiles;
+                if (protocol == ProtocolUdp || protocol == ProtocolAny) status.UdpProfiles |= profiles;
             }
             return status;
         }
 
         // Runs in the elevated copy. Returns the process exit code.
-        public static int Setup(string exePath, int port)
+        public static int Setup(string exePath, int port, bool includePublic)
         {
+            int profiles = ProfileDomain | ProfilePrivate | (includePublic ? ProfilePublic : 0);
             try
             {
                 dynamic policy = Policy();
@@ -81,14 +89,14 @@ namespace KbmOverlay.Relay
                     string application = rule.ApplicationName;
                     if (application != null && SamePath(application, exePath) &&
                         (int)rule.Direction == DirectionIn && (int)rule.Action == ActionBlock &&
-                        ((int)rule.Profiles & (ProfileDomain | ProfilePrivate)) != 0)
+                        ((int)rule.Profiles & profiles) != 0)
                         rule.Enabled = false;
                 }
 
                 RemoveAll(rules, RuleTcp);
                 RemoveAll(rules, RuleUdp);
-                rules.Add(NewRule(RuleTcp, exePath, ProtocolTcp, port));
-                rules.Add(NewRule(RuleUdp, exePath, ProtocolUdp, port));
+                rules.Add(NewRule(RuleTcp, exePath, ProtocolTcp, port, profiles));
+                rules.Add(NewRule(RuleUdp, exePath, ProtocolUdp, port, profiles));
                 return 0;
             }
             catch (Exception)
@@ -98,9 +106,9 @@ namespace KbmOverlay.Relay
         }
 
         // Starts the elevated copy and waits. Returns null on success, or a message for the user.
-        public static string RunElevatedSetup(string exePath, int port)
+        public static string RunElevatedSetup(string exePath, int port, bool includePublic)
         {
-            var info = new ProcessStartInfo(exePath, "--firewall-setup " + port)
+            var info = new ProcessStartInfo(exePath, "--firewall-setup " + port + (includePublic ? " public" : ""))
             {
                 UseShellExecute = true,
                 Verb = "runas",
@@ -125,7 +133,7 @@ namespace KbmOverlay.Relay
             return Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2", true));
         }
 
-        private static dynamic NewRule(string name, string exePath, int protocol, int port)
+        private static dynamic NewRule(string name, string exePath, int protocol, int port, int profiles)
         {
             dynamic rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule", true));
             rule.Name = name;
@@ -136,7 +144,7 @@ namespace KbmOverlay.Relay
             rule.RemoteAddresses = "LocalSubnet";
             rule.Direction = DirectionIn;
             rule.Action = ActionAllow;
-            rule.Profiles = ProfileDomain | ProfilePrivate;
+            rule.Profiles = profiles;
             rule.Enabled = true;
             return rule;
         }
