@@ -1,0 +1,73 @@
+# Builds KbmOverlay.exe on GitHub and attaches it to a release.
+#
+#   1. Set <Version> in KbmOverlay.csproj (e.g. 0.3.1) and push the commit.
+#   2. git tag v0.3.1 && git push origin v0.3.1
+#
+# The tag must match <Version>, so the exe always reports the version it was released as.
+# Running it by hand (Actions > Release > Run workflow) only builds and keeps the exe as an artifact.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Check that the tag matches the project version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          $version = (Select-Xml -Path KbmOverlay.csproj -XPath '//Version').Node.InnerText
+          if ("v$version" -ne '${{ github.ref_name }}') {
+            Write-Error "Tag ${{ github.ref_name }} does not match <Version>$version</Version> in KbmOverlay.csproj."
+            exit 1
+          }
+
+      - name: Build
+        run: dotnet build -c Release -nologo
+
+      - name: Keep the exe as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: KbmOverlay
+          path: bin/Release/net48/KbmOverlay.exe
+
+      - name: Attach the exe to the release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ github.ref_name }}'
+          $exe = 'bin/Release/net48/KbmOverlay.exe'
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $notes = @"
+          Windows 10/11용 KbmOverlay.exe예요. 설치 없이 바로 실행돼요. 사용법은 README를 보세요.
+
+          처음 실행할 때 Windows가 "PC를 보호했습니다"라고 하면 **추가 정보 → 실행**을 누르세요 (코드 서명이 없는 exe라서 나와요).
+
+          이 exe는 GitHub Actions가 이 태그의 소스로 빌드했어요.
+          SHA-256: ``$hash``
+          "@
+          # A file avoids quoting problems with multi-line text passed to gh.
+          $notesFile = Join-Path $env:RUNNER_TEMP 'release-notes.md'
+          Set-Content -Path $notesFile -Value $notes -Encoding utf8
+          gh release view $tag *> $null
+          if ($LASTEXITCODE -eq 0) {
+            # Release made by hand already: replace the exe on it.
+            gh release upload $tag $exe --clobber
+          } else {
+            gh release create $tag $exe --title "KbmOverlay $($tag.TrimStart('v'))" --notes-file $notesFile
+          }

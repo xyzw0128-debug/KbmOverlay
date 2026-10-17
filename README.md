@@ -181,6 +181,22 @@ dotnet build -c Release
 
 결과물은 `bin\Release\net48\KbmOverlay.exe` 하나예요. 페이지(`pages\`)는 exe 안에 들어가요.
 
+## 릴리스 만들기
+
+exe는 GitHub Actions가 빌드해서 Releases에 올려요 (`.github/workflows/release.yml`).
+
+1. `KbmOverlay.csproj`의 `<Version>`을 올리고(예: `0.3.1`) 커밋해서 푸시해요.
+2. 같은 버전으로 태그를 만들어 푸시해요.
+   ```bash
+   git tag v0.3.1
+   ```
+   ```bash
+   git push origin v0.3.1
+   ```
+3. 몇 분 뒤 Releases에 `KbmOverlay 0.3.1`이 생기고 `KbmOverlay.exe`가 붙어요. 설명에는 exe의 SHA-256도 적혀요.
+
+태그와 `<Version>`이 다르면 빌드를 멈춰요. 같은 태그로 이미 만든 릴리스가 있으면 exe만 바꿔 끼워요.
+
 ## 라이선스와 출처
 
 KbmOverlay는 MIT 라이선스예요. 전문은 `LICENSE`에 있어요.
