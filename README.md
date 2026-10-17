@@ -163,8 +163,10 @@ dotnet build -c Release
 
 결과물은 `bin\Release\net48\KbmOverlay.exe` 하나예요. 페이지(`pages\`)는 exe 안에 들어가요.
 
-## 출처
+## 라이선스와 출처
+
+KbmOverlay는 MIT 라이선스예요. 전문은 `LICENSE`에 있어요.
 
 마우스 그림(`mouse.svg`), 키·마우스 색과 애니메이션, 마우스 이동 링, 키 이름표는
 [Zergatul.Obs.InputOverlay](https://github.com/Zergatul/Zergatul.Obs.InputOverlay)(MIT)에서 가져왔어요.
-자세한 내용은 `THIRD-PARTY-NOTICES.txt`에 있어요.
+그 부분의 저작권 고지는 `THIRD-PARTY-NOTICES.txt`에 있어요.
