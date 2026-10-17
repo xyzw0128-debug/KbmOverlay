@@ -158,7 +158,13 @@ namespace KbmOverlay
             Action<string> onCommand = text =>
             {
                 Dictionary<string, object> command = Json.Parse(text);
-                if (Json.Str(command, "cmd") != "language")
+                string cmd = Json.Str(command, "cmd");
+                if (cmd == "exportPages")
+                {
+                    hub.BroadcastStatus(ExportPages(pages));
+                    return;
+                }
+                if (cmd != "language")
                 {
                     relay.Command(text);
                     return;
@@ -260,6 +266,26 @@ namespace KbmOverlay
                                   ((status.BlockedProfiles & row.Profile) != 0 ? T("fwcheck.yes") : T("fwcheck.none")));
             }
             Console.WriteLine(T("fwcheck.onlyPublic", ("value", YesNo(Firewall.OnlyPublicNetwork()))));
+        }
+
+        // "Open the pages folder" on the settings page: copies the built-in pages next to the exe
+        // (keeping files already there), opens the folder and returns the result for the page.
+        private static string ExportPages(PageStore pages)
+        {
+            var result = new Dictionary<string, object> { ["type"] = "exported", ["dir"] = pages.OverrideDir };
+            try
+            {
+                int written = pages.Export();
+                result["count"] = written;
+                Log.Info(T("export.done", ("count", written), ("dir", pages.OverrideDir)));
+                Process.Start(new ProcessStartInfo("explorer.exe", "\"" + pages.OverrideDir + "\"") { UseShellExecute = true });
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is System.ComponentModel.Win32Exception)
+            {
+                result["error"] = e.Message;
+                Log.Warn(T("export.failed", ("error", e.Message), ("dir", pages.OverrideDir)));
+            }
+            return Json.Write(result);
         }
 
         private static void Url(string url, string label)

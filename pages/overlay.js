@@ -30,6 +30,20 @@
         if (value && /^[0-9A-Fa-f]{6}$/.test(value)) document.documentElement.style.setProperty(COLOR_PARAMS[name], '#' + value);
     });
 
+    // ?fade=0.5 (seconds of fading after release), ?glowsize=1 (0 = no glow) and ?round=10 (px of key
+    // corner) win over the look in theme.css. The settings page builds these too.
+    var LOOK_PARAMS = [
+        { name: 'fade', vars: ['--key-release-time', '--mouse-release-time'], unit: 's', max: 3 },
+        { name: 'glowsize', vars: ['--glow-size'], unit: '', max: 3 },
+        { name: 'round', vars: ['--key-radius'], unit: 'px', max: 30 }
+    ];
+    LOOK_PARAMS.forEach(function (look) {
+        var value = parseFloat(params.get(look.name));
+        if (!isFinite(value)) return;
+        value = Math.min(look.max, Math.max(0, value));
+        look.vars.forEach(function (name) { document.documentElement.style.setProperty(name, value + look.unit); });
+    });
+
     function connect(want) {
         var handlers = {};
         var keys = new Set();
@@ -81,6 +95,7 @@
                         break;
                     case 'relay': emit('relay', m); break;           // two-PC status (settings page)
                     case 'relayError': emit('relayError', m.message); break;
+                    case 'exported': emit('exported', m); break;      // pages folder made (settings page)
                 }
             };
             ws.onclose = function () {
@@ -197,9 +212,103 @@
         return Math.min(max, Math.max(min, value));
     }
 
+    // ---- keyboard layouts ----
+    // Layout files (pages/layouts/*.json) list rows of keys, like keyboard-layout-editor:
+    //   { "rows": [ { "y": 0.25, "h": 1, "keys": [ "KeyQ", { "k": "Tab", "w": 1.5, "x": 0.5, "l": "Tab" } ] } ] }
+    // Sizes are in key units. A string is a key name with the default label.
+    // "x" / "y" move right / down by that much first. "w" / "h" are width and height,
+    // "l" the label and "f" the font size in px. Key names are listed in README.md.
+
+    var LABELS = {
+        Esc: 'Esc', Tilde: '~', Minus: '-', Plus: '=', Backspace: 'Back',
+        Tab: 'Tab', LeftBracket: '[', RightBracket: ']', Backslash: '\\',
+        CapsLock: 'Caps', Semicolon: ';', Quote: "'", Enter: 'Enter',
+        LeftShift: 'Shift', RightShift: 'Shift', Comma: ',', Period: '.', Slash: '/', IntlBackslash: '\\',
+        LeftCtrl: 'Ctrl', RightCtrl: 'Ctrl', LeftWindows: 'Win', RightWindows: 'Win',
+        LeftAlt: 'Alt', RightAlt: 'Alt', App: 'Menu', Space: 'Space',
+        Hangul: '한/영', Hanja: '한자',
+        PrintScreen: 'PrtSc', ScrollLock: 'ScrLk', Pause: 'Pause',
+        Insert: 'Ins', Home: 'Home', PageUp: 'PgUp', Delete: 'Del', End: 'End', PageDown: 'PgDn',
+        Left: '←', Up: '↑', Right: '→', Down: '↓',
+        NumLock: 'Num', NumSlash: '/', NumAsterisk: '*', NumMinus: '-', NumPlus: '+',
+        NumPeriod: '.', NumEnter: 'Enter'
+    };
+
+    function keyLabel(name) {
+        if (LABELS.hasOwnProperty(name)) return LABELS[name];
+        if (/^Key[A-Z0-9]$/.test(name)) return name.slice(3);
+        if (/^Num[0-9]$/.test(name)) return name.slice(3);
+        return name;
+    }
+
+    // Turns a layout's rows into keys with name, label, font and x, y, w, h in units.
+    function layoutKeys(layout) {
+        var keys = [];
+        var y = 0;
+        (layout.rows || []).forEach(function (row) {
+            y += row.y || 0;
+            var x = 0;
+            var rowHeight = row.h || 1;
+            (row.keys || []).forEach(function (item) {
+                if (typeof item === 'string') item = { k: item };
+                x += item.x || 0;
+                var w = item.w || 1;
+                keys.push({
+                    name: item.k,
+                    label: item.l != null ? item.l : keyLabel(item.k),
+                    font: item.f,
+                    x: x,
+                    y: y + (item.y || 0),
+                    w: w,
+                    h: item.h || rowHeight
+                });
+                x += w;
+            });
+            y += rowHeight;
+        });
+        return keys;
+    }
+
+    // Keeps only the named keys (?keys=KeyW,KeyA,...) and moves them together: the board starts at
+    // the top left key, and gaps of more than ROW_GAP units between rows of picked keys shrink to ROW_GAP.
+    var ROW_GAP = 0.25;
+    function pickKeys(keys, names) {
+        var wanted = {};
+        names.forEach(function (name) { wanted[name] = true; });
+        var picked = keys.filter(function (key) { return wanted[key.name]; });
+        if (!picked.length) return picked;
+
+        var left = Math.min.apply(null, picked.map(function (key) { return key.x; }));
+        // Bands of rows that have picked keys, top to bottom; each one moves up by the space cut above it.
+        var bands = picked.map(function (key) { return { top: key.y, bottom: key.y + key.h }; })
+            .sort(function (a, b) { return a.top - b.top; });
+        var merged = [];
+        bands.forEach(function (band) {
+            var last = merged[merged.length - 1];
+            if (last && band.top <= last.bottom + ROW_GAP + 1e-9) last.bottom = Math.max(last.bottom, band.bottom);
+            else merged.push({ top: band.top, bottom: band.bottom });
+        });
+        var cut = 0;
+        merged.forEach(function (band, i) {
+            cut += i === 0 ? band.top : band.top - merged[i - 1].bottom - ROW_GAP;
+            band.cut = cut;
+        });
+
+        return picked.map(function (key) {
+            var band = merged.filter(function (b) { return key.y >= b.top - 1e-9 && key.y < b.bottom; })[0];
+            var moved = {};
+            Object.keys(key).forEach(function (name) { moved[name] = key[name]; });
+            moved.x = key.x - left;
+            moved.y = key.y - band.cut;
+            return moved;
+        });
+    }
+
     window.Overlay = {
         params: params,
         number: number,
+        layoutKeys: layoutKeys,
+        pickKeys: pickKeys,
         connect: connect,
         reportSize: reportSize,
         showError: showError,

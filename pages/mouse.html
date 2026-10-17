@@ -13,7 +13,7 @@
 <body>
     <div id="mouse"></div>
     <script>
-        // mouse.html?scale=1.5
+        // mouse.html?scale=1.5 (and ?fade= / ?glowsize=, see overlay.js)
         // mouse.svg (from Zergatul.Obs.InputOverlay) has elements with ids Mouse1..Mouse5,
         // MouseScrollUp and MouseScrollDown; this page colors them through theme.css.
         (function () {
@@ -21,12 +21,14 @@
 
             var SVG_NS = 'http://www.w3.org/2000/svg';
 
-            // Glow filter from Zergatul.Obs.InputOverlay's common.js.
+            // Glow filter from Zergatul.Obs.InputOverlay's common.js, as wide as --glow-size (theme.css / ?glowsize=).
             function addGlowFilter(svg) {
+                var size = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--glow-size'));
+                var blur = 10 * (isFinite(size) ? Math.max(0, size) : 1);
                 var defs = document.createElementNS(SVG_NS, 'defs');
                 defs.innerHTML =
                     '<filter id="glow" filterUnits="userSpaceOnUse" x="-50%" y="-50%" width="200%" height="200%">' +
-                    '<feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur20"/>' +
+                    '<feGaussianBlur in="SourceGraphic" stdDeviation="' + blur + '" result="blur20"/>' +
                     '<feColorMatrix in="blur20" type="matrix" values="1 0 0 2 0 0 1 0 2 0 0 0 1 2 0 0 0 0 1 0" result="blur-colored"/>' +
                     '<feMerge><feMergeNode in="blur-colored"/><feMergeNode in="SourceGraphic"/></feMerge>' +
                     '</filter>';

@@ -73,7 +73,7 @@ streaming PC only *receives* input, and nobody can connect without you allowing 
 
 | URL | Shows | Options |
 |---|---|---|
-| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full`; `scale=1.5` |
+| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full`; `keys=KeyW,KeyA,…` (only these keys); `scale=1.5` |
 | `http://localhost:5520/mouse.html` | Mouse buttons and wheel | `scale=1.5` |
 | `http://localhost:5520/mouse-move.html` | Ring showing the mouse's direction | `size=400` (px), `sens=1` (sensitivity) |
 
@@ -81,9 +81,12 @@ Add options after `?` and join them with `&`, e.g. `keyboard.html?layout=full&sc
 Add `bg=1` to any page to give it a background, which makes it easier to check in a normal browser.
 
 Every page also takes colors, as 6 hex digits without `#`: `pressed` (held), `released` (start of the fade),
-`glow` (keyboard only) and `line` (outline), e.g. `keyboard.html?pressed=1F6FEB&line=FFCC00`. You don't need to type
-them: pick colors in the **Colors** box on the settings page and copy the URL. Changing colors there does not change
-sources already in OBS; copy the URL again and replace it in the source.
+`glow` (keyboard only) and `line` (outline), e.g. `keyboard.html?pressed=1F6FEB&line=FFCC00`.
+The keyboard and mouse also take `fade` (seconds the fade after release lasts, `0` = none), `glowsize` (`1` = normal,
+`0` = no glow) and, keyboard only, `round` (key corner in px).
+
+You don't need to type any of this: everything in [Customizing](#customizing) is set on the settings page, which
+builds the URL. Changes there do not change sources already in OBS; copy the URL again and replace it in the source.
 
 ## Languages
 
@@ -96,8 +99,9 @@ KbmOverlay picks the language in this order:
 3. the Windows display language
 4. English
 
-Translations live in `pages/i18n/<code>.json`, shared by the console and the pages. To add or fix a language, run
-`KbmOverlay.exe --export-pages`, then add or edit `pages/i18n/<code>.json` next to the exe (copy `en.json` to start).
+Translations live in `pages/i18n/<code>.json`, shared by the console and the pages. To add or fix a language, press
+**Open the pages folder** under **About** on the settings page (see [Editing the files](#editing-the-files)), then add
+or edit `i18n/<code>.json` in that folder (copy `en.json` to start).
 It is picked up without rebuilding. Use a two-letter code (`fr`) or a region (`zh-TW`, used automatically on
 Traditional Chinese Windows). Keys missing from a file fall back to English.
 
@@ -105,19 +109,34 @@ The Japanese and Chinese translations were not written by native speakers; corre
 
 ## Customizing
 
-To change only the colors, use the **Colors** box on the settings page (see [Overlay URLs](#overlay-urls)); no
-files needed. For anything else, such as layouts or animations:
+Everything is on the settings page. Your choices go into the overlay URL, so each OBS source can look different, and
+the preview shows the result right away.
 
-```bash
-KbmOverlay.exe --export-pages
-```
+- **Colors:** the **Colors** box (presets, or a picker per color). The same colors go into every overlay's URL.
+- **Fade after release, glow size, rounded corners:** the sliders under **Options** for the keyboard and the mouse.
+  **Default** next to a slider puts it back.
+- **Which keys the keyboard shows:** set **Layout** to **Pick keys**. A full keyboard appears; click a key to turn it
+  on or off. **Add by pressing** adds every key you press on your real keyboard until you press the button again or
+  switch to another window. **Around WASD**, **All** and **Clear** are quick starts.
+  The keys keep their places from a full-size keyboard, and empty rows between them are left out.
 
-This creates a `pages` folder next to the exe. Files there take priority over the built-in pages, so edit them and
-refresh the source in OBS to see the change. Delete a file to go back to the built-in version.
+After changing something, copy the URL again and replace it in the OBS source.
 
-- Change the colors at the top of `theme.css` (`--pressed`, `--released`, `--glow`, …) and the animation times;
-  every overlay follows them. Colors in an overlay URL win over these.
+### Editing the files
+
+Only needed to add a translation or to change the pages themselves. On the settings page, press
+**Open the pages folder** under **About** (or run `KbmOverlay.exe --export-pages`). This copies the built-in pages to
+a `pages` folder next to the exe, keeping files already there, and opens it. Files there take priority over the
+built-in pages, so edit them and refresh the source in OBS to see the change. Delete a file to go back to the built-in
+version. If the folder cannot be made (for example when the exe is in `Program Files`), move the exe somewhere you can
+write to, such as the desktop.
+
+- The colors and the look (`--pressed`, `--glow-size`, `--key-release-time`, …) at the top of `theme.css` apply to
+  every overlay. Values in an overlay URL win over these.
 - Add `layouts/name.json` and use it as `keyboard.html?layout=name`.
+
+A `pages` folder made by an older version keeps its old files, which may lack newer features. Delete the files you
+did not change to use the built-in ones again.
 
 ### Keyboard layout files
 
@@ -159,7 +178,7 @@ The names match Zergatul Input Overlay, so its pages are easy to port.
 |---|---|
 | `--port 5530` | Overlay port (default 5520). Change the port in your OBS URLs too. Avoid 5521, which two PCs use. |
 | `--lang ja` | Language of the console and the settings page (`en`, `ko`, `ja`, `zh`, …). |
-| `--export-pages` | Copy the built-in pages to a `pages` folder. Existing files are not overwritten. |
+| `--export-pages` | Copy the built-in pages to a `pages` folder. Existing files are not overwritten. Same as **Open the pages folder** on the settings page. |
 | `--firewall-check` | Show the streaming PC's firewall status for Private, Domain and Public networks (read only). For troubleshooting two PCs. |
 
 ## How it works
@@ -194,8 +213,8 @@ KbmOverlay handles key input, so here is exactly what it does and does not do.
   - pairing secrets (encrypted with your Windows account)
 
   Delete that folder after removing KbmOverlay and nothing is left.
-- The settings page remembers the menu, options and colors you picked and the URLs you last copied in that browser
-  (local storage for `localhost:5520`). No key input goes there.
+- The settings page remembers the menu, options, colors and keyboard keys you picked and the URLs you last copied in
+  that browser (local storage for `localhost:5520`). No key input goes there; picked keys are only a list of key names.
 - With two PCs, other KbmOverlay instances on the same network can see this PC's **computer name** (e.g.
   `DESKTOP-ABC123`) and its random ID. While receiving is on, so can any KbmOverlay on the network that is looking
   for a streaming PC.

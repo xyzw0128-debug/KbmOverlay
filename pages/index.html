@@ -102,6 +102,25 @@
         .hex { width: 100%; font: 13px Consolas, monospace; text-transform: uppercase; }
         .hex.invalid { border-color: var(--bad); }
         .color-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-top: 12px; font-size: 12px; }
+        .slider { margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+        .slider-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px; }
+        .slider-value { color: var(--text); font-variant-numeric: tabular-nums; }
+        .slider-head .link { margin-left: auto; }
+        .slider input { width: 100%; margin: 0; padding: 0; border: 0; background: none; accent-color: var(--accent); cursor: pointer; }
+
+        /* ---- picking keys by hand ---- */
+        .picker { margin-bottom: 14px; }
+        .picker-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 12px 0; }
+        .pick-count { margin-left: auto; font-size: 13px; }
+        button.listening { background: var(--warn); border-color: var(--warn); color: #1a1405; }
+        .pick-board { position: relative; container-type: inline-size; }
+        button.pick-key { position: absolute; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--muted);
+                          font-size: clamp(9px, 1.15cqw, 13px); line-height: 1; white-space: nowrap; overflow: hidden; }
+        button.pick-key:hover { border-color: var(--muted); color: var(--text); }
+        button.pick-key[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+        button.pick-key.flash { outline: 2px solid var(--warn); outline-offset: 1px; }
+        .pick-note { min-height: 1.55em; margin-top: 10px; }
+        .panel > .box + .box { margin-top: 14px; }
 
         /* ---- two PCs ---- */
         .switch-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
@@ -163,10 +182,6 @@
                 <span data-i18n="relay.title"></span>
                 <span class="badge" id="relay-badge" data-i18n-title="nav.attention" hidden></span>
             </a>
-            <a href="#custom">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2h9A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>
-                <span data-i18n="custom.title"></span>
-            </a>
             <a href="#about">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
                 <span data-i18n="about.title"></span>
@@ -203,6 +218,20 @@
         <section class="panel" data-panel="keyboard" data-page="keyboard.html" data-colors="pressed released glow line" hidden>
             <h2 data-i18n="keyboard.title"></h2>
             <div class="preview"><iframe data-i18n-title="preview.keyboard"></iframe></div>
+            <!-- Shown when the layout is "Pick keys": keyboard.html?keys=... -->
+            <div class="box picker" hidden>
+                <h3 data-i18n="picker.title"></h3>
+                <p class="muted small" data-i18n="picker.intro"></p>
+                <div class="picker-tools">
+                    <button type="button" class="secondary pick-listen" aria-pressed="false" data-i18n="picker.listen"></button>
+                    <button type="button" class="secondary" data-pick="wasd" data-i18n="picker.wasd"></button>
+                    <button type="button" class="secondary" data-pick="all" data-i18n="picker.all"></button>
+                    <button type="button" class="secondary" data-pick="none" data-i18n="picker.none"></button>
+                    <span class="pick-count"></span>
+                </div>
+                <div class="pick-board" role="group" data-i18n-aria="picker.title"></div>
+                <p class="pick-note small muted" aria-live="polite"></p>
+            </div>
             <div class="columns">
                 <div class="box">
                     <h3 data-i18n="box.options"></h3>
@@ -211,11 +240,15 @@
                             <option value="" data-i18n="layout.wasd"></option>
                             <option value="tkl" data-i18n="layout.tkl"></option>
                             <option value="full" data-i18n="layout.full"></option>
+                            <option value="pick" data-i18n="layout.pick"></option>
                         </select>
                     </label>
                     <label class="field"><span data-i18n="option.scale"></span>
                         <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
                     </label>
+                    <div class="slider" data-slider="fade" data-var="--key-release-time" data-format="seconds" data-max="2" data-step="0.05" data-label="look.fade"></div>
+                    <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
+                    <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
                 </div>
                 <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
                 <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
@@ -231,6 +264,8 @@
                     <label class="field"><span data-i18n="option.scale"></span>
                         <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
                     </label>
+                    <div class="slider" data-slider="fade" data-var="--mouse-release-time" data-format="seconds" data-max="1.5" data-step="0.05" data-label="look.fade"></div>
+                    <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
                 </div>
                 <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
                 <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
@@ -304,14 +339,6 @@
             </div>
         </section>
 
-        <section class="panel" data-panel="custom" hidden>
-            <h2 data-i18n="custom.title"></h2>
-            <div class="box prose">
-                <p data-i18n="custom.colorsHint"></p>
-                <p data-i18n-html="custom.text"></p>
-            </div>
-        </section>
-
         <section class="panel" data-panel="about" hidden>
             <h2 data-i18n="about.title"></h2>
             <div class="box prose">
@@ -321,6 +348,15 @@
                     <a href="licenses.html" data-i18n="footer.licenses"></a> ·
                     <a href="https://github.com/xyzw0128-debug/KbmOverlay" target="_blank" rel="noopener">GitHub</a>
                 </p>
+            </div>
+            <div class="box prose">
+                <h3 data-i18n="files.title"></h3>
+                <p class="muted" data-i18n="files.text"></p>
+                <div class="row">
+                    <button type="button" class="secondary" id="open-pages" data-i18n="files.open"></button>
+                </div>
+                <p class="small" id="files-result" aria-live="polite" hidden></p>
+                <p class="muted small" data-i18n-html="files.readme"></p>
             </div>
         </section>
     </main>
@@ -455,16 +491,84 @@
             }).join('').toUpperCase();
         }
 
-        // Show the colors theme.css really has; it can be edited in the pages folder.
+        // ---- look (fade time, glow size, key corners) ----
+        // Also URL options (?fade=0.5&glowsize=1&round=10), set per overlay with the sliders in Options.
+        // A slider left at the theme.css value adds nothing to the URL.
+
+        var lookDefaults = { '--key-release-time': 0.5, '--mouse-release-time': 0.25, '--glow-size': 1, '--key-radius': 10 }; // until theme.css is read
+
+        function formatLook(format, value) {
+            if (format === 'px') return t('unit.px', { value: value });
+            if (value === 0) return t('look.off');
+            if (format === 'percent') return t('unit.percent', { value: Math.round(value * 100) });
+            return t('unit.seconds', { value: value });
+        }
+
+        // Turns <div class="slider" data-slider="fade" data-var="--key-release-time" ...> into a label, a value,
+        // a reset link and a range input with data-param, which then works like the other options.
+        function buildSlider(div) {
+            var label = t(div.getAttribute('data-label'));
+            var head = el('div', 'slider-head');
+            var value = el('span', 'slider-value');
+            var reset = el('button', 'link', t('look.reset'));
+            reset.type = 'button';
+            head.appendChild(el('span', null, label));
+            head.appendChild(value);
+            head.appendChild(reset);
+            var input = el('input');
+            input.type = 'range';
+            input.min = '0';
+            input.max = div.getAttribute('data-max');
+            input.step = div.getAttribute('data-step');
+            input.setAttribute('data-param', div.getAttribute('data-slider'));
+            input.setAttribute('aria-label', label);
+            div.appendChild(head);
+            div.appendChild(input);
+
+            var format = div.getAttribute('data-format');
+            var cssVar = div.getAttribute('data-var');
+            // '' while it follows theme.css, else the value picked.
+            input.picked = '';
+            input.paramValue = function () { return input.picked; };
+            input.setPicked = function (picked) {
+                input.picked = picked !== '' && +picked !== lookDefaults[cssVar] ? String(+picked) : '';
+                input.render();
+            };
+            input.render = function () {
+                input.value = input.picked === '' ? lookDefaults[cssVar] : input.picked;
+                value.textContent = formatLook(format, +input.value);
+                input.setAttribute('aria-valuetext', value.textContent);
+                reset.hidden = input.picked === '';
+            };
+            input.addEventListener('input', function () {
+                value.textContent = formatLook(format, +input.value);
+                input.setAttribute('aria-valuetext', value.textContent);
+            });
+            input.addEventListener('change', function () { input.setPicked(input.value); }, true); // before the card saves it
+            reset.addEventListener('click', function () {
+                input.setPicked('');
+                input.dispatchEvent(new Event('change'));
+            });
+        }
+
+        // Show the colors and look theme.css really has; it can be edited in the pages folder.
         fetch('theme.css')
             .then(function (response) { return response.ok ? response.text() : ''; })
             .then(function (css) {
                 var root = /:root\s*\{([^}]*)\}/.exec(css);
                 if (!root) return;
+                function cssValue(name) {
+                    var match = new RegExp(name + '\\s*:\\s*([^;]+);').exec(root[1]);
+                    return match ? match[1].trim() : null;
+                }
                 COLOR_NAMES.forEach(function (name) {
-                    var match = new RegExp('--' + name + '\\s*:\\s*([^;]+);').exec(root[1]);
-                    var hex = match && cssToHex(match[1].trim());
+                    var value = cssValue('--' + name);
+                    var hex = value && cssToHex(value);
                     if (hex) defaults[name] = hex;
+                });
+                Object.keys(lookDefaults).forEach(function (name) {
+                    var number = parseFloat(cssValue(name));
+                    if (isFinite(number)) lookDefaults[name] = number;
                 });
                 refreshCards();
             })
@@ -566,6 +670,139 @@
             };
         }
 
+        // ---- picking keys by hand (keyboard.html?keys=KeyW,KeyA,...) ----
+        // The full-size layout is drawn as buttons; the picked keys go into the URL in layout order.
+
+        var WASD_KEYS = ['Esc', 'F1', 'Tilde', 'Key1', 'Key2', 'Key3', 'Key4', 'Tab', 'KeyQ', 'KeyW', 'KeyE', 'KeyR',
+            'CapsLock', 'KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'LeftShift', 'KeyZ', 'KeyX', 'KeyC', 'KeyV',
+            'LeftCtrl', 'LeftAlt', 'Space']; // the keys of layouts/wasd.json, picked at first
+        var keyListeners = []; // called with (name, down) for every key KbmOverlay reports
+
+        // Fills the picker box. onChange runs whenever the picked keys change.
+        function keyPicker(box, onChange) {
+            var board = box.querySelector('.pick-board');
+            var count = box.querySelector('.pick-count');
+            var listenButton = box.querySelector('.pick-listen');
+            var note = box.querySelector('.pick-note');
+            var saved = store.get('pickedKeys');
+            var order = Array.isArray(saved) ? saved.filter(function (name) { return typeof name === 'string'; }) : WASD_KEYS.slice();
+            var picked = {};
+            var buttons = {};
+            var listening = false;
+            order.forEach(function (name) { picked[name] = true; });
+
+            function keys() {
+                return order.filter(function (name) { return picked[name]; });
+            }
+
+            function render() {
+                Object.keys(buttons).forEach(function (name) {
+                    buttons[name].setAttribute('aria-pressed', picked[name] ? 'true' : 'false');
+                });
+                var n = keys().length;
+                count.textContent = n ? t('picker.count', { count: n }) : t('picker.empty');
+                count.className = 'pick-count ' + (n ? 'muted' : 'warn');
+            }
+
+            function changed() {
+                store.set('pickedKeys', keys());
+                render();
+                onChange();
+            }
+
+            function setNote(text, tone) {
+                note.textContent = text;
+                note.className = 'pick-note small ' + (tone || 'muted');
+            }
+
+            function setListening(on) {
+                listening = on;
+                listenButton.setAttribute('aria-pressed', on ? 'true' : 'false');
+                listenButton.classList.toggle('listening', on);
+                listenButton.textContent = t(on ? 'picker.listening' : 'picker.listen');
+                setNote(on ? t('picker.listenHint') : '');
+            }
+
+            fetch('layouts/full.json')
+                .then(function (response) { return response.json(); })
+                .then(function (layout) {
+                    var all = Overlay.layoutKeys(layout);
+                    var right = 0, bottom = 0;
+                    all.forEach(function (key) {
+                        right = Math.max(right, key.x + key.w);
+                        bottom = Math.max(bottom, key.y + key.h);
+                    });
+                    board.style.aspectRatio = right + ' / ' + bottom;
+                    all.forEach(function (key) {
+                        var button = el('button', 'pick-key', key.label);
+                        button.type = 'button';
+                        button.title = key.name;
+                        button.style.left = 'calc(' + (key.x / right * 100) + '% + 1.5px)';
+                        button.style.top = 'calc(' + (key.y / bottom * 100) + '% + 1.5px)';
+                        button.style.width = 'calc(' + (key.w / right * 100) + '% - 3px)';
+                        button.style.height = 'calc(' + (key.h / bottom * 100) + '% - 3px)';
+                        button.addEventListener('click', function () {
+                            picked[key.name] = !picked[key.name];
+                            changed();
+                        });
+                        board.appendChild(button);
+                        buttons[key.name] = button;
+                    });
+                    // From now on the URL lists keys in layout order, and only keys this layout has.
+                    order = all.map(function (key) { return key.name; });
+                    Object.keys(picked).forEach(function (name) { if (!buttons[name]) delete picked[name]; });
+                    changed();
+                })
+                .catch(function () { setNote(t('overlay.layoutMissing', { name: 'full' }), 'bad'); });
+
+            Array.prototype.forEach.call(box.querySelectorAll('[data-pick]'), function (button) {
+                button.addEventListener('click', function () {
+                    var which = button.getAttribute('data-pick');
+                    picked = {};
+                    if (which === 'all') order.forEach(function (name) { picked[name] = true; });
+                    if (which === 'wasd') WASD_KEYS.forEach(function (name) { picked[name] = true; });
+                    changed();
+                });
+            });
+
+            // "Add by pressing": the next keys pressed on the keyboard are picked. It stops when the
+            // browser loses focus, so keys pressed in a game are not added.
+            // Also stops once the picker is no longer on screen (another menu or layout was chosen).
+            function stillListening() {
+                if (listening && (box.hidden || box.closest('[data-panel]').hidden)) setListening(false);
+                return listening;
+            }
+            listenButton.addEventListener('click', function () { setListening(!listening); });
+            window.addEventListener('blur', function () { if (listening) setListening(false); });
+            document.addEventListener('keydown', function (event) {
+                if (stillListening()) event.preventDefault(); // no scrolling on Space, no button press on Enter, ...
+            });
+            keyListeners.push(function (name, down) {
+                if (!down || !stillListening()) return;
+                var button = buttons[name];
+                if (!button) {
+                    setNote(t('picker.notOnBoard', { name: name }), 'warn');
+                    return;
+                }
+                setNote(t('picker.listenHint'));
+                if (!picked[name]) {
+                    picked[name] = true;
+                    changed();
+                }
+                button.classList.add('flash');
+                setTimeout(function () { button.classList.remove('flash'); }, 400);
+            });
+
+            render();
+            return {
+                keys: keys,
+                show: function (on) {
+                    box.hidden = !on;
+                    if (!on && listening) setListening(false);
+                }
+            };
+        }
+
         // ---- overlay panels ----
 
         var PREVIEW_PAD = 16;         // px around the overlay inside the preview
@@ -592,24 +829,46 @@
             var changedNote = obsBox.querySelector('.changed');
             var sizeText = obsBox.querySelector('.size');
             obsBox.querySelector('.howto').open = !Object.keys(copied).length; // open until something was copied once
+            Array.prototype.forEach.call(card.querySelectorAll('[data-slider]'), buildSlider);
             var controls = Array.prototype.slice.call(card.querySelectorAll('[data-param]'));
+            var sliders = controls.filter(function (control) { return control.type === 'range'; });
             var renderColors = colorBox(card.querySelector('.colors'), colorNames);
+            var layoutSelect = card.querySelector('[data-param="layout"]');
+            var pickerBox = card.querySelector('.picker');
+            var picker = pickerBox ? keyPicker(pickerBox, function () { update(); }) : null;
             var size = null;
+
+            // What a control adds to the URL; '' adds nothing.
+            function paramValue(control) {
+                if (control.paramValue) return control.paramValue();
+                return control === layoutSelect && picking() ? '' : control.value.trim();
+            }
+
+            function picking() {
+                return !!picker && layoutSelect.value === 'pick';
+            }
 
             var options = savedOptions[page] || {};
             controls.forEach(function (control) {
                 var value = options[control.getAttribute('data-param')];
                 if (typeof value !== 'string') return;
+                if (control.setPicked) {
+                    control.setPicked(value);
+                    return;
+                }
                 control.value = value;
                 if (control.tagName === 'SELECT' && control.selectedIndex < 0) control.selectedIndex = 0;
             });
+            sliders.forEach(function (slider) { slider.render(); });
+            if (picker) picker.show(picking());
 
             function url() {
                 var parts = [];
                 controls.forEach(function (control) {
-                    var value = control.value.trim();
+                    var value = paramValue(control);
                     if (value !== '') parts.push(control.getAttribute('data-param') + '=' + encodeURIComponent(value));
                 });
+                if (picking()) parts.push('keys=' + picker.keys().join(','));
                 colorNames.forEach(function (name) {
                     if (colors[name]) parts.push(name + '=' + colors[name]);
                 });
@@ -643,9 +902,13 @@
             controls.forEach(function (control) {
                 control.addEventListener('change', function () {
                     var values = {};
-                    controls.forEach(function (c) { values[c.getAttribute('data-param')] = c.value.trim(); });
+                    controls.forEach(function (c) { values[c.getAttribute('data-param')] = c.paramValue ? c.paramValue() : c.value.trim(); });
                     savedOptions[page] = values;
                     store.set('options', savedOptions);
+                    if (control === layoutSelect && picker) {
+                        picker.show(picking());
+                        if (picking()) pickerBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
                     update();
                 });
             });
@@ -680,6 +943,7 @@
                 fit: fit,
                 refresh: function () {
                     renderColors();
+                    sliders.forEach(function (slider) { slider.render(); });
                     update();
                 }
             });
@@ -724,6 +988,7 @@
             })
             .on('key', function (name, down) {
                 if (down) $('last-input').textContent = t('input.key', { name: name });
+                keyListeners.forEach(function (listener) { listener(name, down); });
             })
             .on('button', function (name, down) {
                 if (down) $('last-input').textContent = t('input.button', { name: t('button.' + name) });
@@ -732,7 +997,15 @@
             .on('relayError', function (message) {
                 $('manual-error').textContent = message;
                 $('manual-error').hidden = false;
+            })
+            .on('exported', function (result) {
+                var text = $('files-result');
+                text.hidden = false;
+                if (result.error) setText(text, t('files.failed', { error: result.error, dir: result.dir }), 'small bad');
+                else setText(text, t(result.count ? 'files.copied' : 'files.opened', { count: result.count, dir: result.dir }), 'small good');
             });
+
+        $('open-pages').addEventListener('click', function () { connection.send({ cmd: 'exportPages' }); });
 
         languageSelect.addEventListener('change', function () {
             connection.send({ cmd: 'language', lang: languageSelect.value });

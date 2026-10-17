@@ -10,68 +10,15 @@
     <div class="board" id="board"></div>
     <script>
         // keyboard.html?layout=wasd|tkl|full (a file in layouts/)&scale=1.5
-        //
-        // Layout files list rows of keys, like keyboard-layout-editor:
-        //   { "rows": [ { "y": 0.25, "h": 1, "keys": [ "KeyQ", { "k": "Tab", "w": 1.5, "x": 0.5, "l": "Tab" } ] } ] }
-        // Sizes are in key units. A string is a key name with the default label.
-        // "x" / "y" move right / down by that much first. "w" / "h" are width and height,
-        // "l" the label and "f" the font size in px. Key names are listed in README.md.
+        // keyboard.html?keys=KeyW,KeyA,KeyS,KeyD,Space shows only those keys, placed as on the full-size
+        // layout (or on ?layout= when given). The settings page builds this list.
+        // The layout file format is described in overlay.js.
         (function () {
             'use strict';
 
             var UNIT = 48;   // px from one key to the next
             var GAP = 4;     // px between keys
             var PAD = 12;    // px around the board, room for the glow
-
-            var LABELS = {
-                Esc: 'Esc', Tilde: '~', Minus: '-', Plus: '=', Backspace: 'Back',
-                Tab: 'Tab', LeftBracket: '[', RightBracket: ']', Backslash: '\\',
-                CapsLock: 'Caps', Semicolon: ';', Quote: "'", Enter: 'Enter',
-                LeftShift: 'Shift', RightShift: 'Shift', Comma: ',', Period: '.', Slash: '/', IntlBackslash: '\\',
-                LeftCtrl: 'Ctrl', RightCtrl: 'Ctrl', LeftWindows: 'Win', RightWindows: 'Win',
-                LeftAlt: 'Alt', RightAlt: 'Alt', App: 'Menu', Space: 'Space',
-                Hangul: '한/영', Hanja: '한자',
-                PrintScreen: 'PrtSc', ScrollLock: 'ScrLk', Pause: 'Pause',
-                Insert: 'Ins', Home: 'Home', PageUp: 'PgUp', Delete: 'Del', End: 'End', PageDown: 'PgDn',
-                Left: '←', Up: '↑', Right: '→', Down: '↓',
-                NumLock: 'Num', NumSlash: '/', NumAsterisk: '*', NumMinus: '-', NumPlus: '+',
-                NumPeriod: '.', NumEnter: 'Enter'
-            };
-
-            function defaultLabel(name) {
-                if (LABELS.hasOwnProperty(name)) return LABELS[name];
-                if (/^Key[A-Z0-9]$/.test(name)) return name.slice(3);
-                if (/^Num[0-9]$/.test(name)) return name.slice(3);
-                return name;
-            }
-
-            // Turns rows into keys with x, y, w, h in units.
-            function expand(layout) {
-                var keys = [];
-                var y = 0;
-                (layout.rows || []).forEach(function (row) {
-                    y += row.y || 0;
-                    var x = 0;
-                    var rowHeight = row.h || 1;
-                    (row.keys || []).forEach(function (item) {
-                        if (typeof item === 'string') item = { k: item };
-                        x += item.x || 0;
-                        var w = item.w || 1;
-                        keys.push({
-                            name: item.k,
-                            label: item.l != null ? item.l : defaultLabel(item.k),
-                            font: item.f,
-                            x: x,
-                            y: y + (item.y || 0),
-                            w: w,
-                            h: item.h || rowHeight
-                        });
-                        x += w;
-                    });
-                    y += rowHeight;
-                });
-                return keys;
-            }
 
             function fitFont(label, width, height) {
                 var size = Math.min(20, height * 0.55);
@@ -85,7 +32,14 @@
                 var elements = {};
                 var right = 0, bottom = 0;
 
-                expand(layout).forEach(function (key) {
+                var keys = Overlay.layoutKeys(layout);
+                if (picked) keys = Overlay.pickKeys(keys, picked);
+                if (!keys.length) {
+                    Overlay.i18n().then(function (t) { Overlay.showError(t('overlay.noKeys')); });
+                    return;
+                }
+
+                keys.forEach(function (key) {
                     var width = key.w * UNIT - GAP;
                     var height = key.h * UNIT - GAP;
                     var el = document.createElement('div');
@@ -124,7 +78,10 @@
                 });
             }
 
-            var name = (Overlay.params.get('layout') || 'wasd').replace(/[^A-Za-z0-9_-]/g, '');
+            var picked = Overlay.params.has('keys')
+                ? Overlay.params.get('keys').split(',').map(function (name) { return name.trim(); }).filter(Boolean)
+                : null;
+            var name = (Overlay.params.get('layout') || (picked ? 'full' : 'wasd')).replace(/[^A-Za-z0-9_-]/g, '');
             var missing = false;
             fetch('layouts/' + name + '.json')
                 .then(function (response) {

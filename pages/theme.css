@@ -2,16 +2,18 @@
  * Colors and animations for all overlays. Change them here, or copy a rule into one page.
  * Key look (white outline, green press with blue glow, green fade on release) and the mouse
  * colors come from Zergatul.Obs.InputOverlay (MIT, see THIRD-PARTY-NOTICES.txt).
- * An overlay URL can also set colors (?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF);
- * those win over the ones here. The color boxes on the settings page build them.
+ * An overlay URL can also set colors (?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF) and
+ * the look (?fade=0.5&glowsize=1&round=10); those win over the ones here. The settings page builds them.
  */
 :root {
     --line: #ffffff;            /* key outline and text */
     --pressed: #2DA026;         /* while held */
     --released: #96CF13;        /* start color of the fade after release */
     --glow: rgba(35, 173, 255, 1);
-    --key-release-time: 0.5s;
-    --mouse-release-time: 0.25s;
+    --glow-size: 1;             /* 0 = no glow, 2 = twice as wide (?glowsize=) */
+    --key-radius: 10px;         /* key corners (?round=) */
+    --key-release-time: 0.5s;   /* fade after release (?fade= on keyboard.html) */
+    --mouse-release-time: 0.25s; /* (?fade= on mouse.html) */
     --scroll-time: 0.25s;
     --font: Calibri, "Malgun Gothic", "Yu Gothic UI", "Microsoft YaHei UI", "Segoe UI", sans-serif;
 }
@@ -37,7 +39,7 @@ html, body {
     align-items: center;
     justify-content: center;
     border: 2px solid var(--line);
-    border-radius: 10px;
+    border-radius: var(--key-radius);
     color: var(--line);
     font-family: var(--font);
     font-size: 20px;
@@ -48,7 +50,7 @@ html, body {
 
 .key.pressed {
     background-color: var(--pressed);
-    box-shadow: 0 0 8px 3px var(--glow);
+    box-shadow: 0 0 calc(8px * var(--glow-size)) calc(3px * var(--glow-size)) var(--glow);
 }
 
 .key.released {
