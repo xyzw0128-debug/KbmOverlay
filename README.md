@@ -1,233 +1,273 @@
 # KbmOverlay
 
-키보드·마우스 입력을 OBS 브라우저 소스로 보여주는 프로그램이에요. PC 한 대(원컴)와 두 대(투컴) 모두 돼요.
+**English** · [한국어](README.ko.md)
 
-- **exe 하나로 동작해요.** Windows 10/11에 기본으로 있는 .NET Framework 4.8을 써서 따로 설치할 게 없어요.
-- **원컴이면 방화벽을 건드리지 않아요.** 오버레이는 이 PC 안(`localhost`)에서만 열려요.
-- **OBS를 새로 고칠 필요가 없어요.** 프로그램을 껐다 켜면 오버레이가 몇 초 안에 알아서 다시 연결돼요.
-- **투컴도 OBS 주소는 그대로예요.** 방송 PC에서도 `http://localhost:5520/...`를 써요. IP를 적을 일이 없어요.
-- **키 입력을 저장하거나 인터넷으로 보내지 않아요.** 자세한 내용은 아래 [개인정보](#개인정보)에 있어요.
+KbmOverlay shows your keyboard and mouse input in OBS as browser sources. It works with one PC, and with two PCs
+(a game PC and a streaming PC).
 
-> KbmOverlay는 개인이 만든 프로그램이에요. OBS Studio(OBS Project)나 Zergatul Input Overlay의 공식 프로그램이 아니고,
-> 그 프로젝트들과 관련이 없어요. 디자인 일부는 Zergatul Input Overlay에서 MIT 라이선스로 가져왔어요.
+- **A single exe.** It uses .NET Framework 4.8, which comes with Windows 10 and 11, so there is nothing to install.
+- **One PC needs no firewall changes.** The overlays are served only inside the PC (`localhost`).
+- **No OBS refresh needed.** Restart KbmOverlay and the overlays reconnect on their own within a few seconds.
+- **Same OBS URLs with two PCs.** The streaming PC also uses `http://localhost:5520/...`. You never type an IP into OBS.
+- **Key input is never saved or sent to the internet.** See [Privacy](#privacy).
+- **English, Korean, Japanese and Chinese.** The language follows Windows; see [Languages](#languages).
 
-## 쓰는 법
+> KbmOverlay is a personal project. It is not an official program of OBS Studio (OBS Project) or Zergatul Input
+> Overlay and is not affiliated with them. Parts of its design come from Zergatul Input Overlay under the MIT license.
 
-1. `KbmOverlay.exe`를 더블클릭해요.
-2. 창에서 **Enter**를 누르면 설정 페이지(`http://localhost:5520/`)가 브라우저로 열려요.
-   주소 복사, OBS에 넣을 크기, 미리보기가 다 여기에 있어요.
-3. OBS에서 소스 **+** → **브라우저**를 고르고, 복사한 주소를 **URL**에 붙여 넣어요.
-   **너비/높이**는 설정 페이지에 나온 숫자대로 넣어요. "로컬 파일"은 체크하지 않아요.
+## Getting started
 
-게임이 관리자 권한으로 실행되면 KbmOverlay도 **우클릭 → 관리자 권한으로 실행**해야 입력이 잡혀요.
+1. Download `KbmOverlay.exe` from [Releases](https://github.com/xyzw0128-debug/KbmOverlay/releases/latest) and double-click it.
+   The first time, Windows may say "Windows protected your PC" because the exe is not code-signed.
+   Choose **More info → Run anyway**.
+2. Press **Enter** in its window to open the settings page (`http://localhost:5520/`) in your browser.
+   It has the URLs to copy, the sizes to use in OBS, and live previews.
+3. In OBS, under **Sources**, press **+** → **Browser**, and paste a copied URL into **URL**.
+   Set **Width** and **Height** to the numbers on the settings page. Leave "Local file" unchecked.
 
-## 투컴 (게임 PC + 방송 PC)
+If a game runs as administrator, start KbmOverlay as administrator too (**right-click → Run as administrator**),
+or its input will not show.
 
-두 PC 모두 `KbmOverlay.exe`를 실행해요. 같은 공유기(같은 네트워크)에 있어야 해요.
+## Two PCs (game PC + streaming PC)
 
-**방송 PC (OBS가 있는 PC), 처음 한 번만**
-1. 설정 페이지의 **투컴** 칸에서 **게임 PC 입력 받기 켜기**를 눌러요.
-2. Windows가 관리자 권한을 물으면 **예**를 눌러요. 방화벽에 KbmOverlay를 허용하는 단계예요.
-   - 네트워크가 **공용**으로 되어 있으면 안내가 떠요. **공용에서도 받기**를 누르거나(KbmOverlay만 허용돼요),
-     Windows 설정에서 네트워크를 **개인**으로 바꾸면 돼요. 아래 "공용 네트워크" 설명을 참고하세요.
-3. OBS에는 원컴과 똑같이 `http://localhost:5520/...` 주소를 넣어요.
+Run `KbmOverlay.exe` on both PCs. They must be on the same network (same router).
 
-**게임 PC, 처음 한 번만**
-1. KbmOverlay를 실행하면 몇 초 안에 "방송 PC '이름'을 찾았어요"가 떠요.
-2. 창에서 **S**를 누르거나, 설정 페이지에서 **보내기**를 눌러요.
-3. 두 PC 화면에 **확인 숫자 6자리**가 떠요. 방송 PC에서 숫자가 같은지 보고 **허용**을 눌러요.
-   콘솔 창에서는 **Y**(허용) / **N**(거절)이에요.
+**Streaming PC (the one with OBS), first time only**
+1. In the **Two PCs** part of the settings page, press **Receive from game PCs**.
+2. When Windows asks for administrator permission, choose **Yes**. This allows KbmOverlay in the firewall.
+   - If the network is set to **Public**, the page tells you. Either press **Also receive on Public networks**
+     (allows KbmOverlay only), or set the network to **Private** in Windows Settings. See [Public networks](#public-networks).
+3. In OBS, use the same `http://localhost:5520/...` URLs as with one PC.
 
-이후로는 두 PC에서 실행만 하면 자동으로 연결돼요. 게임 PC가 연결돼 있는 동안 방송 PC의 오버레이는
-게임 PC 입력을 보여주고, 연결이 끊기면 눌려 있던 키를 풀고 방송 PC 자신의 입력으로 돌아가요.
+**Game PC, first time only**
+1. Start KbmOverlay. Within a few seconds it shows "Found streaming PC '…'".
+2. Press **S** in its window, or press **Send** on the settings page.
+3. Both PCs show the same **6-digit code**. On the streaming PC, check that the codes match and press **Allow**
+   (in its console window: **Y** to allow, **N** to deny).
 
-- 자동으로 못 찾으면(공유기가 기기끼리 통신을 막는 경우 등) 게임 PC 설정 페이지에 방송 PC의 IP를 직접 넣어요.
-  방송 PC의 IP는 방송 PC 설정 페이지의 투컴 칸에 나와 있어요.
-- 그만 보내려면 게임 PC 설정 페이지에서 **보내기 끄기**를 눌러요. 허용한 게임 PC를 지우려면 방송 PC에서 **삭제**를 눌러요.
-- 투컴은 포트 **5521**(TCP·UDP)을 써요. 방화벽 규칙은 방송 PC에만, KbmOverlay.exe 하나만,
-  같은 네트워크(LocalSubnet)에서만, "개인/도메인" 네트워크에서만 열리게 만들어져요.
-  exe를 다른 폴더로 옮기면 규칙을 다시 만들어야 해서, 받기 켜기를 한 번 더 누르면 돼요.
+From then on, starting KbmOverlay on both PCs is enough; they connect by themselves. While the game PC is connected,
+the streaming PC's overlays show the game PC's input. If the connection drops, held keys are released and the
+overlays show the streaming PC's own input again.
 
-### 공용 네트워크
+- If the game PC cannot find the streaming PC (some routers block devices from seeing each other), enter the streaming
+  PC's IP on the game PC's settings page. The streaming PC's settings page shows its IP in the Two PCs part.
+- To stop, press **Stop sending** on the game PC. To remove an allowed game PC, press **Remove** on the streaming PC.
+- Two PCs use port **5521** (TCP and UDP). The firewall rules ("KbmOverlay two-PC relay") are added only on the
+  streaming PC, for KbmOverlay.exe only, from the local subnet only, on Private/Domain networks only.
+  If you move the exe to another folder, press **Receive from game PCs** once more to update the rules.
 
-Windows 11은 새 네트워크를 "공용"으로 잡는 경우가 많아요. 집 공유기여도 마찬가지예요. 방송 PC가 공용이면 두 가지 방법이 있어요.
+### Public networks
 
-| 방법 | 열리는 범위 |
+Windows 11 often marks new networks as Public, even a home router. If the streaming PC is on a Public network:
+
+| Option | What it opens |
 |---|---|
-| **공용에서도 받기** (설정 페이지 버튼) | KbmOverlay.exe 하나, 포트 5521 하나, 같은 네트워크에서 오는 연결만 |
-| 네트워크를 **개인**으로 바꾸기 | 네트워크 검색, 파일·프린터 공유 같은 Windows 기능도 그 네트워크를 신뢰하게 돼요 |
+| **Also receive on Public networks** (button on the settings page) | KbmOverlay.exe only, port 5521 only, connections from the same network only |
+| Set the network to **Private** | Windows features such as network discovery and file and printer sharing also trust that network |
 
-열리는 범위만 보면 **공용에서도 받기**가 더 좁아요. 이 설정은 카페 와이파이처럼 실제 공용 네트워크에서도 적용돼요.
-그래도 방송 PC는 입력을 *받기만* 하고, 누가 접속해도 직접 허용해야만 연결돼요. 끄려면 설정 페이지의 **공용에서는 받지 않기**를 눌러요.
-게임 PC는 공용 네트워크여도 아무것도 바꿀 필요가 없어요.
+**Also receive on Public networks** opens less. It also applies on real public networks such as café Wi-Fi, but the
+streaming PC only *receives* input, and nobody can connect without you allowing them. To turn it off, press
+**Stop receiving on Public networks**. The game PC needs no changes on a Public network.
 
-## 오버레이 주소
+## Overlay URLs
 
-| 주소 | 내용 | 옵션 |
+| URL | Shows | Options |
 |---|---|---|
-| `http://localhost:5520/keyboard.html` | 키보드 | `layout=wasd`(기본) · `tkl` · `full`, `scale=1.5` |
-| `http://localhost:5520/mouse.html` | 마우스 버튼·휠 | `scale=1.5` |
-| `http://localhost:5520/mouse-move.html` | 마우스 이동 방향 링 | `size=400`(px), `sens=1`(민감도) |
+| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full`; `scale=1.5` |
+| `http://localhost:5520/mouse.html` | Mouse buttons and wheel | `scale=1.5` |
+| `http://localhost:5520/mouse-move.html` | Ring showing the mouse's direction | `size=400` (px), `sens=1` (sensitivity) |
 
-옵션은 `?`로 붙이고 여러 개면 `&`로 이어요. 예: `keyboard.html?layout=full&scale=0.8`
-어느 페이지든 `bg=1`을 붙이면 배경이 생겨서 일반 브라우저에서 확인하기 쉬워요.
+Add options after `?` and join them with `&`, e.g. `keyboard.html?layout=full&scale=0.8`.
+Add `bg=1` to any page to give it a background, which makes it easier to check in a normal browser.
 
-## 꾸미기
+## Languages
+
+The console window and the settings page are available in **English, Korean (한국어), Japanese (日本語) and
+Simplified Chinese (简体中文)**. Overlays have no text, so they look the same in every language.
+
+KbmOverlay picks the language in this order:
+1. `--lang` when starting it, e.g. `KbmOverlay.exe --lang ja`
+2. the language chosen in the menu at the top right of the settings page (remembered)
+3. the Windows display language
+4. English
+
+Translations live in `pages/i18n/<code>.json`, shared by the console and the pages. To add or fix a language, run
+`KbmOverlay.exe --export-pages`, then add or edit `pages/i18n/<code>.json` next to the exe (copy `en.json` to start).
+It is picked up without rebuilding. Use a two-letter code (`fr`) or a region (`zh-TW`, used automatically on
+Traditional Chinese Windows). Keys missing from a file fall back to English.
+
+The Japanese and Chinese translations were not written by native speakers; corrections are welcome.
+
+## Customizing
 
 ```bash
 KbmOverlay.exe --export-pages
 ```
 
-exe 옆에 `pages` 폴더가 생겨요. 여기 있는 파일이 내장 페이지보다 우선이라, 고친 뒤 OBS에서 소스를 새로 고치면 바로 반영돼요.
-파일을 지우면 다시 내장 페이지가 쓰여요.
+This creates a `pages` folder next to the exe. Files there take priority over the built-in pages, so edit them and
+refresh the source in OBS to see the change. Delete a file to go back to the built-in version.
 
-- `theme.css` 맨 위의 색(`--pressed`, `--released`, `--glow` …)과 애니메이션 시간을 바꾸면 모든 오버레이에 적용돼요.
-- `layouts/이름.json`을 새로 만들면 `keyboard.html?layout=이름`으로 쓸 수 있어요.
+- Change the colors at the top of `theme.css` (`--pressed`, `--released`, `--glow`, …) and the animation times;
+  every overlay follows them.
+- Add `layouts/name.json` and use it as `keyboard.html?layout=name`.
 
-### 키보드 배열 파일
+### Keyboard layout files
 
-줄(row) 단위로 키를 왼쪽부터 적어요. 크기 단위는 "키 1개"예요.
+List the keys row by row, from left to right. Sizes are in key units.
 
 ```json
 {
   "rows": [
     { "h": 0.75, "keys": ["Esc", { "k": "F1", "x": 1 }] },
     { "y": 0.25, "keys": ["Tilde", "Key1", "Key2"] },
-    { "keys": [{ "k": "Tab", "w": 1.5 }, "KeyQ", { "k": "KeyW", "l": "앞" }] }
+    { "keys": [{ "k": "Tab", "w": 1.5 }, "KeyQ", { "k": "KeyW", "l": "Up" }] }
   ]
 }
 ```
 
-- 키 이름만 적으면 기본 크기(1×1)와 기본 글자로 나와요.
-- `w`/`h`: 너비/높이, `x`: 이 키 앞에 띄울 칸, `l`: 표시할 글자, `f`: 글자 크기(px)
-- 줄의 `y`: 이 줄 위에 띄울 칸, 줄의 `h`: 이 줄 키들의 기본 높이
+- A plain key name gets the default size (1×1) and the default label.
+- `w` / `h`: width / height, `x`: space before this key, `l`: label, `f`: font size in px.
+- On a row, `y`: space above the row, `h`: default height of its keys.
 
-### 키 이름
+### Key names
 
-| 구역 | 이름 |
+| Group | Names |
 |---|---|
-| 기능키 | `Esc` `F1`–`F24` `PrintScreen` `ScrollLock` `Pause` |
-| 숫자 줄 | `Tilde` `Key1`–`Key0` `Minus` `Plus` `Backspace` |
-| 글자 | `KeyA`–`KeyZ` `Tab` `CapsLock` `Enter` `Space` |
-| 기호 | `LeftBracket` `RightBracket` `Backslash` `Semicolon` `Quote` `Comma` `Period` `Slash` `IntlBackslash` |
-| 조합키 | `LeftShift` `RightShift` `LeftCtrl` `RightCtrl` `LeftAlt` `RightAlt` `LeftWindows` `RightWindows` `App` |
-| 한국어 | `Hangul`(한/영) `Hanja`(한자) |
-| 편집·방향 | `Insert` `Home` `PageUp` `Delete` `End` `PageDown` `Up` `Down` `Left` `Right` |
-| 숫자패드 | `NumLock` `NumSlash` `NumAsterisk` `NumMinus` `NumPlus` `NumEnter` `NumPeriod` `Num0`–`Num9` |
-| 마우스 | `Mouse1`(왼쪽) `Mouse2`(오른쪽) `Mouse3`(휠) `Mouse4` `Mouse5`(옆 버튼) |
+| Function | `Esc` `F1`–`F24` `PrintScreen` `ScrollLock` `Pause` |
+| Number row | `Tilde` `Key1`–`Key0` `Minus` `Plus` `Backspace` |
+| Letters | `KeyA`–`KeyZ` `Tab` `CapsLock` `Enter` `Space` |
+| Symbols | `LeftBracket` `RightBracket` `Backslash` `Semicolon` `Quote` `Comma` `Period` `Slash` `IntlBackslash` |
+| Modifiers | `LeftShift` `RightShift` `LeftCtrl` `RightCtrl` `LeftAlt` `RightAlt` `LeftWindows` `RightWindows` `App` |
+| Korean | `Hangul` (Han/Yeong) `Hanja` |
+| Editing and arrows | `Insert` `Home` `PageUp` `Delete` `End` `PageDown` `Up` `Down` `Left` `Right` |
+| Numpad | `NumLock` `NumSlash` `NumAsterisk` `NumMinus` `NumPlus` `NumEnter` `NumPeriod` `Num0`–`Num9` |
+| Mouse | `Mouse1` (left) `Mouse2` (right) `Mouse3` (wheel) `Mouse4` (back) `Mouse5` (forward) |
 
-키 이름은 Zergatul Input Overlay와 같아서, 그쪽 페이지를 옮겨 오기도 쉬워요.
+The names match Zergatul Input Overlay, so its pages are easy to port.
 
-## 실행 옵션
+## Command-line options
 
-| 옵션 | 설명 |
+| Option | Description |
 |---|---|
-| `--port 5530` | 오버레이 포트를 바꿔요 (기본 5520). OBS 주소의 포트도 같이 바꿔야 해요. 5521은 투컴용이라 피해요. |
-| `--export-pages` | 내장 페이지를 `pages` 폴더로 꺼내요. 이미 있는 파일은 덮어쓰지 않아요. |
-| `--firewall-check` | 방송 PC의 방화벽 상태를 네트워크 종류(개인·도메인·공용)별로 보여줘요 (읽기만 해요). 투컴이 안 될 때 확인용이에요. |
+| `--port 5530` | Overlay port (default 5520). Change the port in your OBS URLs too. Avoid 5521, which two PCs use. |
+| `--lang ja` | Language of the console and the settings page (`en`, `ko`, `ja`, `zh`, …). |
+| `--export-pages` | Copy the built-in pages to a `pages` folder. Existing files are not overwritten. |
+| `--firewall-check` | Show the streaming PC's firewall status for Private, Domain and Public networks (read only). For troubleshooting two PCs. |
 
-## 동작 방식
+## How it works
 
-- **입력 감지:** Raw Input을 써요. 게임에 포커스가 있어도 입력을 받고, FPS 게임처럼 커서가 고정돼도 마우스 이동량을 그대로 받아요. 시스템 입력에 끼어드는 훅을 쓰지 않아서 입력이 느려지지 않아요.
-- **전송:** 키와 버튼은 바로 보내요. 마우스 이동과 휠은 최대 초당 125번으로 묶어서 보내요(이동량 합계는 그대로). 1000Hz로 마우스 이동을 넣어 테스트했을 때 메시지 수가 약 1/10로 줄었어요.
-- **눌림 고착 방지:** UAC 창 같은 데서 "뗌" 신호를 놓쳐도, Windows의 실제 키 상태를 0.5초마다 확인해서 약 1초 안에 풀어요.
-- **한/영·한자 키:** 일부 키보드는 이 키에서 "뗌" 신호를 보내지 않아요. 그래서 누를 때마다 잠깐 켜졌다 꺼지게 처리해요.
-- **재연결:** 페이지는 연결이 끊기면 눌린 표시를 모두 지우고, 다시 연결되면 현재 눌린 상태를 받아요.
-- **투컴:** 게임 PC가 방송 PC로 연결해서 위와 같은 이벤트를 보내요. 그래서 방화벽 허용은 방송 PC에만 필요해요.
-  게임 PC는 UDP 브로드캐스트로 방송 PC를 찾고, 방송 PC의 답만 받아요. 게임 PC는 5초마다 연결 확인을 보내고,
-  15초 동안 아무것도 오지 않으면 방송 PC가 연결을 끊고 눌린 키를 풀어요.
+- **Input:** Raw Input. It receives input while a game has focus, and gets the mouse's relative movement even when a
+  game locks the cursor (FPS games). It does not hook into system input, so it cannot slow input down.
+- **Sending:** keys and buttons go out immediately. Mouse movement and wheel are summed and sent at most 125 times a
+  second (the totals are kept). With 1000 Hz of simulated mouse movement this cut the number of messages to about a tenth.
+- **No stuck keys:** if a release is missed (for example while a UAC prompt is open), KbmOverlay checks Windows' key
+  state every 0.5 s and releases the key within about a second.
+- **Korean Han/Yeong and Hanja keys:** some keyboards send no release for these, so each press lights up briefly.
+- **Reconnecting:** when the connection drops, pages clear all pressed keys; when it comes back they receive the
+  current pressed state.
+- **Two PCs:** the game PC connects to the streaming PC and sends the same events, so only the streaming PC needs a
+  firewall rule. The game PC finds it with a UDP broadcast and only receives its answer. The game PC sends a keep-alive
+  every 5 s; if nothing arrives for 15 s, the streaming PC drops the connection and releases held keys.
 
-## 개인정보
+## Privacy
 
-키 입력을 다루는 프로그램이라, 무엇을 하고 무엇을 하지 않는지 적어 둘게요.
+KbmOverlay handles key input, so here is exactly what it does and does not do.
 
-- **키 입력을 저장하지 않아요.** 눌린 키는 메모리에서 오버레이로 바로 넘기고 끝나요. 파일이나 로그에 남기지 않아요.
-  설정 페이지의 "방금 누른 키"도 그 브라우저 화면에만 보여요.
-- **인터넷으로 아무것도 보내지 않아요.** 업데이트 확인, 사용 통계, 오류 보고 같은 외부 접속이 없어요.
-- **네트워크는 이것만 써요.**
-  - 포트 5520: 이 PC 안(localhost)에서 OBS와 설정 페이지에 보여주기
-  - 포트 5521: 투컴을 켰을 때만, 같은 공유기 안의 짝을 맺은 PC끼리 (암호화)
-- **저장하는 것**은 `%APPDATA%\KbmOverlay\settings.json` 하나예요.
-  - 이 PC의 무작위 ID
-  - 받기 켜기 여부
-  - 짝을 맺은 PC의 이름·주소
-  - 짝 비밀값 (Windows 계정으로 암호화)
+- **It does not save key input.** Pressed keys go from memory straight to the overlays and are never written to a
+  file or log. "Last key" on the settings page is shown only in that browser page.
+- **It sends nothing to the internet.** No update checks, usage statistics or error reports.
+- **It uses only these network connections:**
+  - port 5520: showing the overlays and the settings page inside this PC (localhost)
+  - port 5521: only with two PCs turned on, between paired PCs on the same network (encrypted)
+- **It stores one file**, `%APPDATA%\KbmOverlay\settings.json`, with:
+  - a random ID for this PC
+  - whether receiving is on, and the chosen language
+  - the names and addresses of paired PCs
+  - pairing secrets (encrypted with your Windows account)
 
-  KbmOverlay를 지운 뒤 이 폴더를 지우면 남는 게 없어요.
-- 투컴을 쓰면 같은 네트워크의 다른 KbmOverlay에 이 PC의 **컴퓨터 이름**(예: `DESKTOP-ABC123`)과 무작위 ID가 보여요.
-  방송 PC에서 받기를 켜 두면, 같은 네트워크에서 방송 PC를 찾는 KbmOverlay에게도 보여요.
+  Delete that folder after removing KbmOverlay and nothing is left.
+- With two PCs, other KbmOverlay instances on the same network can see this PC's **computer name** (e.g.
+  `DESKTOP-ABC123`) and its random ID. While receiving is on, so can any KbmOverlay on the network that is looking
+  for a streaming PC.
 
-## 보안
+## Security
 
-키 입력을 보여주는 프로그램은 구조상 키로거와 같아서, 다른 곳에서 못 읽게 막아 뒀어요.
-보안 문제를 발견하면 공개 이슈 대신 [SECURITY.md](SECURITY.md)의 방법으로 비공개로 알려 주세요.
+A program that shows key input works like a keylogger, so it is locked down so that nothing else can read the input.
+If you find a security problem, report it privately as described in [SECURITY.md](SECURITY.md), not in a public issue.
 
-**오버레이와 설정 페이지 (포트 5520)**
-- `127.0.0.1`과 `::1`에서만 열려요. 다른 PC에서는 접속할 수 없어요.
-- `Host` 헤더가 `localhost` / `127.0.0.1` / `[::1]`이 아니면 거절해요 (DNS 리바인딩 방지).
-- 입력 스트림(`/ws`)은 이 프로그램이 보낸 페이지에서만 열 수 있어요. 일반 브라우저에 열린 다른 웹사이트가 접속하면 거절하고 창에 경고를 남겨요.
-  투컴 설정(받기 켜기, 허용 등)도 이 연결로만 바꿀 수 있어서, 다른 웹사이트가 대신 누를 수 없어요.
+**Overlays and settings page (port 5520)**
+- Listens only on `127.0.0.1` and `::1`. Other PCs cannot connect.
+- Rejects requests whose `Host` header is not `localhost`, `127.0.0.1` or `[::1]` (blocks DNS rebinding).
+- The input stream (`/ws`) only accepts pages served by KbmOverlay itself. If another website open in your browser
+  tries to connect, it is refused and a warning appears in the console. Two-PC settings (turning receiving on,
+  allowing a PC, …) can only be changed through this stream, so other websites cannot press them for you.
 
-**투컴 (포트 5521)**
-- 받기를 켠 방송 PC만 이 포트를 열어요. 같은 네트워크(사설 IP)에서 오는 연결만 받아요.
-  인터넷 쪽에서는 닿지 않아요. KbmOverlay는 공유기에 포트를 여는 기능(UPnP, 포트 포워딩)을 쓰지 않아요.
-- 공유기가 해킹당해도 암호화된 키 입력은 읽을 수 없고, 짝을 맺은 PC를 흉내 낼 수도 없어요.
-  할 수 있는 건 연결을 끊거나, 허용 요청을 띄우는 정도예요.
-- 키 입력은 **게임 PC에서 고르고 방송 PC에서 허용한 뒤에만** 보내요. 같은 공유기의 다른 PC가 자기를 방송 PC라고
-  속여도, 게임 PC 사용자가 고르지 않으면 아무것도 보내지 않아요.
-- 연결마다 새 키를 만들어(P-256 ECDH) **암호화(AES-256)하고 위조를 막아요(HMAC-SHA256)**.
-  같은 공유기에서 엿봐도 키 입력을 읽을 수 없어요.
-- 처음 허용할 때 두 화면에 뜨는 **확인 숫자**가 같으면, 중간에 끼어든 PC가 없다는 뜻이에요.
-- 허용 후에는 두 PC가 짝 비밀값을 기억해서 다음부터는 묻지 않아요. 비밀값은 `%APPDATA%\KbmOverlay\settings.json`에
-  Windows 사용자 계정으로 암호화(DPAPI)해서 저장해요. 파일을 다른 PC로 복사해도 쓸 수 없어요.
-- 거절한 게임 PC가 다시 요청하면 1분 동안은 묻지 않고 막아요.
+**Two PCs (port 5521)**
+- Only a streaming PC with receiving turned on opens this port, and it accepts connections only from private
+  (local network) addresses. It cannot be reached from the internet: KbmOverlay never opens ports on your router
+  (no UPnP, no port forwarding).
+- Even if the router is compromised, the encrypted input cannot be read and paired PCs cannot be impersonated.
+  An attacker can only drop the connection or show pairing requests.
+- Input is sent only after you **pick the streaming PC on the game PC and allow it on the streaming PC**. If another
+  PC on the network pretends to be a streaming PC, nothing is sent unless you pick it on the game PC.
+- Every connection makes new keys (P-256 ECDH) and is **encrypted (AES-256) and authenticated (HMAC-SHA256)**.
+  Others on the same network cannot read the input.
+- When pairing, matching **codes** on both screens mean no other PC is in between.
+- After pairing, both PCs remember a pairing secret, so they do not ask again. It is stored in
+  `%APPDATA%\KbmOverlay\settings.json`, encrypted with your Windows account (DPAPI); copying the file to another PC
+  does not make it usable.
+- After you deny a game PC, its new requests are ignored for one minute.
 
-## 문제 해결
+## Troubleshooting
 
-- **아무것도 안 보여요:** 설정 페이지 위쪽이 "연결됨"인지, 키를 누르면 "방금 누른 키"가 바뀌는지 봐요.
-  바뀌면 OBS 소스 쪽(주소, 크기, "로컬 파일" 체크)을 확인해요.
-- **게임 안에서만 안 돼요:** 게임이 관리자 권한일 가능성이 커요. KbmOverlay도 관리자 권한으로 실행해요.
-- **포트를 쓸 수 없다고 나와요:** `KbmOverlay.exe --port 5530`처럼 다른 번호로 실행하고, OBS 주소의 포트도 바꿔요.
-- **투컴: 게임 PC가 방송 PC를 못 찾아요.**
-  - 방송 PC 설정 페이지의 투컴 칸이 "게임 PC를 기다리는 중"인지 봐요.
-  - "네트워크가 '공용'"이라고 나오면 **공용에서도 받기**를 누르거나, Windows 설정 > 네트워크 및 인터넷에서 그 네트워크를 **개인**으로 바꿔요.
-  - 그래도 안 되면 게임 PC 설정 페이지에 방송 PC의 IP를 직접 넣어요.
-  - 방송 PC에서 `KbmOverlay.exe --firewall-check`를 실행하면 방화벽 규칙이 있는지 볼 수 있어요.
-- **투컴: 방송 PC에 게임 PC 입력이 안 보여요.** 방송 PC 설정 페이지 위쪽에 "게임 PC '이름' 입력 표시 중"이 있는지 봐요.
-  있는데도 안 보이면 게임 PC의 KbmOverlay를 관리자 권한으로 실행해 봐요 (게임이 관리자 권한인 경우).
+- **Nothing shows:** on the settings page, check that the top says "connected" and that "Last key" changes when you
+  press a key. If it does, check the OBS source (URL, size, "Local file" unchecked).
+- **Only games do not show:** the game probably runs as administrator. Run KbmOverlay as administrator too.
+- **"Port … is used" or "reserved":** start with another number, e.g. `KbmOverlay.exe --port 5530`, and change the
+  port in your OBS URLs.
+- **Two PCs: the game PC does not find the streaming PC.**
+  - Check that the Two PCs part on the streaming PC says it is waiting for a game PC.
+  - If it says the network is Public, press **Also receive on Public networks**, or set the network to **Private** in
+    Windows Settings > Network & internet.
+  - If it still fails, enter the streaming PC's IP on the game PC's settings page.
+  - Run `KbmOverlay.exe --firewall-check` on the streaming PC to see whether the firewall rules exist.
+- **Two PCs: the game PC's input does not show on the streaming PC.** Check that the top of the streaming PC's settings
+  page says it is showing the game PC. If it does and input still does not show, run KbmOverlay on the game PC as
+  administrator (when the game runs as administrator).
 
-## 빌드
+## Building
 
-.NET SDK(8 이상)가 있으면:
+With the .NET SDK (8 or later):
 
 ```bash
 dotnet build -c Release
 ```
 
-결과물은 `bin\Release\net48\KbmOverlay.exe` 하나예요. 페이지(`pages\`)는 exe 안에 들어가요.
+The result is a single `bin\Release\net48\KbmOverlay.exe`; the pages (`pages\`) are built into it.
 
-## 릴리스 만들기
+## Making a release
 
-exe는 GitHub Actions가 빌드해서 Releases에 올려요 (`.github/workflows/release.yml`).
+GitHub Actions builds the exe and attaches it to the release (`.github/workflows/release.yml`).
 
-1. `KbmOverlay.csproj`의 `<Version>`을 올리고(예: `0.3.1`) 커밋해서 푸시해요.
-2. 같은 버전으로 태그를 만들어 푸시해요.
+1. Raise `<Version>` in `KbmOverlay.csproj` (e.g. `0.4.1`), commit and push.
+2. Tag the same version and push the tag:
    ```bash
-   git tag v0.3.1
+   git tag v0.4.1
    ```
    ```bash
-   git push origin v0.3.1
+   git push origin v0.4.1
    ```
-3. 몇 분 뒤 Releases에 `KbmOverlay 0.3.1`이 생겨요. `KbmOverlay.exe`와 함께 `LICENSE`, `THIRD-PARTY-NOTICES.txt`가 붙어요.
-   설명에는 exe의 SHA-256도 적혀요.
+3. A few minutes later, Releases has `KbmOverlay 0.4.1` with `KbmOverlay.exe`, `LICENSE` and
+   `THIRD-PARTY-NOTICES.txt`. The notes include the exe's SHA-256.
 
-태그와 `<Version>`이 다르면 빌드를 멈춰요. 같은 태그로 이미 만든 릴리스가 있으면 파일만 바꿔 끼워요.
+The build stops if the tag and `<Version>` differ. If a release with that tag already exists, only its files are replaced.
 
-## 라이선스와 출처
+## License and credits
 
-KbmOverlay는 MIT 라이선스예요. 전문은 `LICENSE`에 있어요.
-두 고지문은 exe 안에도 들어 있어서, 실행 중에는 설정 페이지 아래의 **라이선스와 출처**(`http://localhost:5520/licenses.html`)에서 볼 수 있어요.
+KbmOverlay is released under the MIT license; see `LICENSE`.
+Both notices are also built into the exe and shown at **Licenses and credits** at the bottom of the settings page
+(`http://localhost:5520/licenses.html`).
 
-마우스 그림(`mouse.svg`), 키·마우스 색과 애니메이션, 마우스 이동 링, 키 이름표는
-[Zergatul.Obs.InputOverlay](https://github.com/Zergatul/Zergatul.Obs.InputOverlay)(MIT)에서 가져왔어요.
-그 부분의 저작권 고지는 `THIRD-PARTY-NOTICES.txt`에 있어요.
+The mouse picture (`mouse.svg`), the key and mouse colors and animations, the mouse movement ring and the key name
+table come from [Zergatul.Obs.InputOverlay](https://github.com/Zergatul/Zergatul.Obs.InputOverlay) (MIT).
+Its copyright notice is in `THIRD-PARTY-NOTICES.txt`.

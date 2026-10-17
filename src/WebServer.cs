@@ -21,17 +21,16 @@ namespace KbmOverlay
         private readonly int port;
         private readonly PageStore pages;
         private readonly InputHub hub;
-        private readonly bool elevated;
-        private readonly string version;
+        private readonly Func<string> info;
         private readonly Action<string> onCommand;
 
-        public WebServer(int port, PageStore pages, InputHub hub, bool elevated, string version, Action<string> onCommand)
+        // info: the JSON served at /info.json (version, language, ...).
+        public WebServer(int port, PageStore pages, InputHub hub, Func<string> info, Action<string> onCommand)
         {
             this.port = port;
             this.pages = pages;
             this.hub = hub;
-            this.elevated = elevated;
-            this.version = version;
+            this.info = info;
             this.onCommand = onCommand;
         }
 
@@ -117,7 +116,7 @@ namespace KbmOverlay
             catch (Exception e)
             {
                 // An exception escaping a thread would end the whole program.
-                Log.Error("요청을 처리하다가 오류가 났어요: " + e.Message);
+                Log.Error(I18n.T("error.request", ("error", e.Message)));
             }
             finally
             {
@@ -138,7 +137,7 @@ namespace KbmOverlay
             string origin = request.Header("Origin");
             if (origin != null && !IsOwnOrigin(origin))
             {
-                Log.Warn("다른 사이트(" + origin + ")에서 입력을 읽으려는 접속을 막았어요.");
+                Log.Warn(I18n.T("warn.originBlocked", ("origin", origin)));
                 Respond(stream, 403, "text/plain; charset=utf-8", Encoding.UTF8.GetBytes("Origin not allowed"), true);
                 return;
             }
@@ -179,9 +178,7 @@ namespace KbmOverlay
             string path = request.Path == "/" ? "index.html" : request.Path.TrimStart('/');
             if (path == "info.json")
             {
-                string info = "{\"name\":\"KbmOverlay\",\"version\":\"" + version + "\",\"port\":" + port +
-                              ",\"elevated\":" + (elevated ? "true" : "false") + ",\"clients\":" + hub.ClientCount + "}";
-                Respond(stream, 200, "application/json; charset=utf-8", Encoding.UTF8.GetBytes(info), !head);
+                Respond(stream, 200, "application/json; charset=utf-8", Encoding.UTF8.GetBytes(info()), !head);
                 return;
             }
 

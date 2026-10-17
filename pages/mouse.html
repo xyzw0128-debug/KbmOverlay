@@ -83,14 +83,18 @@
                     });
             }
 
+            var missing = false;
             fetch('mouse.svg')
                 .then(function (response) {
-                    if (!response.ok) throw new Error('mouse.svg 파일이 없어요.');
+                    missing = !response.ok;
+                    if (missing) throw new Error('mouse.svg');
                     return response.text();
                 })
                 .then(start)
                 .catch(function (error) {
-                    Overlay.showError('마우스 그림을 불러오지 못했어요\n' + error.message);
+                    Overlay.i18n().then(function (t) {
+                        Overlay.showError(t('overlay.mouseFailed') + '\n' + (missing ? t('overlay.mouseMissing') : error.message));
+                    });
                 });
         })();
     </script>

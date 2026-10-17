@@ -1,6 +1,57 @@
+# Security policy
+
+**English** · [한국어](#보안-정책)
+
+KbmOverlay handles keyboard and mouse input, so please report security problems privately before making them public.
+
+## Supported versions
+
+Security fixes go into the [latest release](https://github.com/xyzw0128-debug/KbmOverlay/releases/latest) only.
+Please check that the problem still happens there.
+
+## Reporting a vulnerability
+
+- Use the **Security** tab → **Report a vulnerability**. Only the maintainer can see the report.
+- Please do not post it in public issues or discussions; others could abuse it before it is fixed.
+- These details help:
+  - KbmOverlay version and Windows version
+  - one PC or two PCs (and on which PC it happens)
+  - steps to reproduce, and what an attacker gains (for example: can read key input)
+
+Reports are looked at as soon as possible. When a fixed version is released, you will be asked first whether you
+want to be credited.
+
+## What counts as a vulnerability
+
+- Reading key or mouse input from outside this PC or from another website (including bypassing the Host and Origin
+  checks on port 5520)
+- On the two-PC connection (port 5521):
+  - pairing without approval, or impersonating a paired PC
+  - reading or changing the encrypted input
+  - running code on, or crashing, the streaming PC just by connecting
+- Firewall rules wider than documented in the README (KbmOverlay.exe only, port 5521, same network)
+- Pairing secrets in the settings file becoming usable on another Windows account or PC
+
+## Known limits (not vulnerabilities)
+
+- **The exe is not code-signed.** Windows SmartScreen warns on first run. Check the exe with the SHA-256 in the
+  release notes.
+- **First pairing is only safe if you compare the codes.** If an attacker is on the same network and you allow
+  without comparing, the connection could be intercepted.
+- **The two-PC connection is encrypted, but *when* key events are sent is visible on the same network.**
+- **Anyone who can use this PC with the same Windows account has the same rights as KbmOverlay.** They could read
+  this PC's input directly, so KbmOverlay does not try to stop them.
+- **Antivirus software may be suspicious of a program that reads key input.** Report false positives as a normal issue.
+
+The design is described in the [README's Security section](README.md#security).
+
+---
+
 # 보안 정책
 
-KbmOverlay는 키보드·마우스 입력을 다루는 프로그램이라, 보안 문제는 공개 이슈보다 먼저 비공개로 알려 주세요.
+[English](#security-policy) · **한국어**
+
+KbmOverlay는 키보드·마우스 입력을 다루는 프로그램이라, 보안 문제는 공개하기 전에 먼저 비공개로 알려 주세요.
 
 ## 지원하는 버전
 
@@ -39,15 +90,4 @@ KbmOverlay는 키보드·마우스 입력을 다루는 프로그램이라, 보�
   그 사람은 이 PC의 입력을 직접 읽을 수도 있으므로 KbmOverlay가 막는 대상이 아니에요.
 - **키 입력을 읽는 구조상 백신이 의심할 수 있어요.** 오탐으로 보이면 일반 이슈로 알려 주세요.
 
-설계는 [README의 보안 섹션](README.md#보안)에 정리돼 있어요.
-
----
-
-## Security policy (English)
-
-Please report vulnerabilities privately through the **Security** tab → **Report a vulnerability**, not in public issues.
-Only the latest release receives security fixes. In scope: reading input from outside this PC or from other websites,
-pairing or impersonating a PC without approval, reading or altering relay traffic, crashing or running code on the
-streaming PC over port 5521, and firewall rules wider than documented. Known limits that are not vulnerabilities are
-listed above (unsigned exe, first pairing relies on comparing the code, event timing is visible on the LAN, local users
-of the same Windows account, antivirus false positives).
+설계는 [한국어 README의 보안 섹션](README.ko.md#보안)에 정리돼 있어요.

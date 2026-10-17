@@ -6,7 +6,7 @@ using System.Net;
 namespace KbmOverlay.Relay
 {
     // Two-PC mode. Every KbmOverlay can be both:
-    //   - a streaming PC (receiver), once "게임 PC 입력 받기" is turned on, and
+    //   - a streaming PC (receiver), once "Receive from game PCs" is turned on, and
     //   - a game PC (sender), once the user picks a streaming PC it found.
     // Commands come from the settings page (WebSocket text) and console keys.
     internal sealed class RelayManager
@@ -50,13 +50,13 @@ namespace KbmOverlay.Relay
                 receive = settings.Receive;
                 paired = settings.Senders.Count;
             }
-            yield return "  투컴 (이 PC 이름: " + NetInfo.MachineName + ")";
-            yield return receive
-                ? "    방송 PC로 쓰는 중: 게임 PC 입력 받기 켜짐" + (paired > 0 ? " (허용한 게임 PC " + paired + "대)" : "")
-                : "    방송 PC로 쓰려면 설정 페이지에서 '게임 PC 입력 받기'를 켜세요.";
+            yield return I18n.T("relay.banner", ("machine", NetInfo.MachineName));
+            yield return !receive ? I18n.T("relay.receiveOff")
+                : paired > 0 ? I18n.T("relay.receiveOnPaired", ("count", paired))
+                : I18n.T("relay.receiveOn");
             yield return target != null
-                ? "    게임 PC로 쓰는 중: 방송 PC '" + target.Name + "'를 찾으면 자동으로 보내요."
-                : "    게임 PC로 쓰려면 방송 PC를 찾았을 때 이 창에서 S를 누르세요.";
+                ? I18n.T("relay.sendOn", ("name", target.Name))
+                : I18n.T("relay.sendOff");
         }
 
         public string StatusJson()
@@ -122,7 +122,7 @@ namespace KbmOverlay.Relay
             }
             catch (Exception e)
             {
-                Log.Error("설정 페이지 요청을 처리하다가 오류가 났어요: " + e.Message);
+                Log.Error(I18n.T("error.command", ("error", e.Message)));
             }
         }
 

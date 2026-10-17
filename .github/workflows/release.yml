@@ -56,15 +56,21 @@ jobs:
           $files = @($exe, 'LICENSE', 'THIRD-PARTY-NOTICES.txt')
           $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLowerInvariant()
           $notes = @"
-          Windows 10/11용 KbmOverlay.exe예요. 설치 없이 바로 실행돼요. 사용법은 README를 보세요.
+          KbmOverlay.exe for Windows 10/11. No installation needed; see the README for how to use it.
 
-          처음 실행할 때 Windows가 "PC를 보호했습니다"라고 하면 **추가 정보 → 실행**을 누르세요 (코드 서명이 없는 exe라서 나와요).
+          If Windows says "Windows protected your PC" on first run, choose **More info → Run anyway** (the exe is not code-signed).
 
-          키 입력을 파일로 저장하거나 인터넷으로 보내지 않아요. OBS Studio의 공식 프로그램이 아니에요.
-          라이선스(MIT)와 함께 쓰인 프로젝트의 고지는 LICENSE, THIRD-PARTY-NOTICES.txt에 있고, 실행 중에는 설정 페이지의 '라이선스와 출처'에서도 볼 수 있어요.
+          Key input is never saved or sent to the internet. Not an official OBS Studio program.
+          The MIT license and the notices for the projects it uses are in LICENSE and THIRD-PARTY-NOTICES.txt, and under "Licenses and credits" on the settings page while it runs.
 
-          이 exe는 GitHub Actions가 이 태그의 소스로 빌드했어요.
+          This exe was built by GitHub Actions from the source of this tag.
           SHA-256: ``$hash``
+
+          ---
+
+          Windows 10/11용 KbmOverlay.exe예요. 설치 없이 바로 실행돼요. 사용법은 README.ko.md를 보세요.
+          처음 실행할 때 "PC를 보호했습니다"가 나오면 **추가 정보 → 실행**을 누르세요 (코드 서명이 없는 exe라서 나와요).
+          키 입력을 저장하거나 인터넷으로 보내지 않아요. OBS Studio의 공식 프로그램이 아니에요.
           "@
           # A file avoids quoting problems with multi-line text passed to gh.
           $notesFile = Join-Path $env:RUNNER_TEMP 'release-notes.md'

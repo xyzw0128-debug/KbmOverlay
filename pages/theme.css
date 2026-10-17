@@ -11,7 +11,7 @@
     --key-release-time: 0.5s;
     --mouse-release-time: 0.25s;
     --scroll-time: 0.25s;
-    --font: Calibri, "Malgun Gothic", "Segoe UI", sans-serif;
+    --font: Calibri, "Malgun Gothic", "Yu Gothic UI", "Microsoft YaHei UI", "Segoe UI", sans-serif;
 }
 
 html, body {

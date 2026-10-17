@@ -51,6 +51,29 @@ namespace KbmOverlay
             return embedded.TryGetValue(path, out data);
         }
 
+        public bool Exists(string path)
+        {
+            return embedded.ContainsKey(path) || File.Exists(Path.Combine(OverrideDir, path.Replace('/', Path.DirectorySeparatorChar)));
+        }
+
+        // Built-in and override files directly inside a folder, e.g. List("i18n/") -> "i18n/en.json", ...
+        public IEnumerable<string> List(string folder)
+        {
+            var names = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string name in embedded.Keys)
+                if (name.StartsWith(folder, StringComparison.OrdinalIgnoreCase) && name.IndexOf('/', folder.Length) < 0) names.Add(name);
+            string dir = Path.Combine(OverrideDir, folder.TrimEnd('/').Replace('/', Path.DirectorySeparatorChar));
+            try
+            {
+                if (Directory.Exists(dir))
+                    foreach (string file in Directory.GetFiles(dir)) names.Add(folder + Path.GetFileName(file));
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+            }
+            return names;
+        }
+
         // Writes the built-in pages to OverrideDir, keeping files that already exist.
         public int Export()
         {

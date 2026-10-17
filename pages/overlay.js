@@ -121,6 +121,68 @@
         reportSize(Math.max(320, div.offsetWidth), div.offsetHeight);
     }
 
+    // ---- translations ----
+    // Same files as the console (pages/i18n/<code>.json). The language is ?lang=, else the one
+    // KbmOverlay uses (info.json), else English. Missing keys fall back to English.
+    var i18nPromise = null;
+
+    function loadJson(url) {
+        return fetch(url)
+            .then(function (response) { return response.ok ? response.json() : {}; })
+            .catch(function () { return {}; });
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+    }
+
+    function i18n() {
+        if (i18nPromise) return i18nPromise;
+        i18nPromise = loadJson('info.json').then(function (info) {
+            var lang = (params.get('lang') || info.lang || 'en').replace(/[^A-Za-z0-9-]/g, '');
+            return Promise.all([loadJson('i18n/en.json'), lang === 'en' ? null : loadJson('i18n/' + lang + '.json')])
+                .then(function (files) {
+                    var english = files[0];
+                    var current = files[1] || english;
+                    function text(key) {
+                        if (current[key] != null) return current[key];
+                        return english[key] != null ? english[key] : key;
+                    }
+                    function fill(template, vars, escape) {
+                        return template.replace(/\{(\w+)\}/g, function (match, name) {
+                            if (!vars || !(name in vars)) return match;
+                            return escape ? escapeHtml(vars[name]) : String(vars[name]);
+                        });
+                    }
+                    // t(key, vars) gives plain text; t.html(key, vars) gives markup with vars escaped.
+                    var t = function (key, vars) { return fill(text(key), vars, false); };
+                    t.html = function (key, vars) { return fill(text(key), vars, true); };
+                    t.lang = lang;
+                    t.info = info;
+                    return t;
+                });
+        });
+        return i18nPromise;
+    }
+
+    // Fills elements marked with data-i18n (text), data-i18n-html (markup from the translation
+    // file), data-i18n-placeholder, data-i18n-title and data-i18n-aria.
+    function translate(t, root) {
+        function each(attr, apply) {
+            Array.prototype.forEach.call(root.querySelectorAll('[' + attr + ']'), function (el) {
+                apply(el, el.getAttribute(attr));
+            });
+        }
+        each('data-i18n', function (el, key) { el.textContent = t(key); });
+        each('data-i18n-html', function (el, key) { el.innerHTML = t.html(key); });
+        each('data-i18n-placeholder', function (el, key) { el.placeholder = t(key); });
+        each('data-i18n-title', function (el, key) { el.title = t(key); });
+        each('data-i18n-aria', function (el, key) { el.setAttribute('aria-label', t(key)); });
+        document.documentElement.lang = t.lang;
+    }
+
     function number(name, fallback, min, max) {
         var value = parseFloat(params.get(name));
         if (!isFinite(value)) return fallback;
@@ -132,6 +194,8 @@
         number: number,
         connect: connect,
         reportSize: reportSize,
-        showError: showError
+        showError: showError,
+        i18n: i18n,
+        translate: translate
     };
 })();

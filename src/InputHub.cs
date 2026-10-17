@@ -285,7 +285,7 @@ namespace KbmOverlay
                 catch (Exception e)
                 {
                     // An exception escaping this thread would end the whole program.
-                    Log.Error("입력을 보내다가 오류가 났어요: " + e.Message);
+                    Log.Error(I18n.T("error.send", ("error", e.Message)));
                     Thread.Sleep(100);
                 }
             }

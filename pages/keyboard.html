@@ -125,14 +125,18 @@
             }
 
             var name = (Overlay.params.get('layout') || 'wasd').replace(/[^A-Za-z0-9_-]/g, '');
+            var missing = false;
             fetch('layouts/' + name + '.json')
                 .then(function (response) {
-                    if (!response.ok) throw new Error('layouts/' + name + '.json 파일이 없어요.');
+                    missing = !response.ok;
+                    if (missing) throw new Error(name);
                     return response.json();
                 })
                 .then(build)
                 .catch(function (error) {
-                    Overlay.showError('키보드 레이아웃을 불러오지 못했어요\n' + error.message);
+                    Overlay.i18n().then(function (t) {
+                        Overlay.showError(t('overlay.layoutFailed') + '\n' + (missing ? t('overlay.layoutMissing', { name: name }) : error.message));
+                    });
                 });
         })();
     </script>

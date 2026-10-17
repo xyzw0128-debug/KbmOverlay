@@ -14,7 +14,7 @@ namespace KbmOverlay.Relay
     //
     // Connection: hello exchange (plain), then everything encrypted. A paired game PC proves it knows
     // the pairing secret and is shown right away. A new one asks for pairing; this PC shows a prompt
-    // with a 6-digit code (also shown on the game PC) and waits up to 60 s for 허용/거절.
+    // with a 6-digit code (also shown on the game PC) and waits up to 60 s for Allow/Deny.
     // Only one game PC is shown at a time.
     internal sealed class RelayReceiver
     {
@@ -79,7 +79,7 @@ namespace KbmOverlay.Relay
 
         public int Port => port;
 
-        // userAction: true when the user just pressed "받기 켜기", so asking for UAC is expected.
+        // userAction: true when the user just pressed "Receive from game PCs", so asking for UAC is expected.
         public void SetEnabled(bool on, bool userAction)
         {
             lock (settings)
@@ -87,11 +87,11 @@ namespace KbmOverlay.Relay
                 settings.Receive = on;
                 settings.Save();
             }
-            if (!on) Log.Info("  투컴 받기를 껐어요.");
+            if (!on) Log.Info(I18n.T("receive.off"));
             Restart(userAction);
         }
 
-        // "공용에서도 받기": also accept game PCs while every network is "Public". The firewall rules
+        // "Also receive on Public networks": also accept game PCs while every network is "Public". The firewall rules
         // get the Public profile too (still this exe, this port, local subnet only). Always a user action.
         public void SetAllowPublic(bool on)
         {
@@ -103,8 +103,8 @@ namespace KbmOverlay.Relay
                 receive = settings.Receive;
             }
             Log.Info(on
-                ? "  공용 네트워크에서도 게임 PC 연결을 받도록 바꿨어요 (KbmOverlay만, 포트 " + port + "만, 같은 네트워크에서만)."
-                : "  공용 네트워크에서는 게임 PC 연결을 받지 않도록 바꿨어요.");
+                ? I18n.T("receive.publicOn", ("port", port))
+                : I18n.T("receive.publicOff"));
             if (receive) Restart(true);
             else changed();
         }
@@ -147,9 +147,9 @@ namespace KbmOverlay.Relay
                         if (!announcedPublic)
                         {
                             announcedPublic = true;
-                            Log.Warn("  [!] 이 PC의 네트워크가 '공용'이라서 게임 PC가 접속할 수 없어요. 둘 중 하나를 해 주세요.");
-                            Log.Warn("      - 설정 페이지에서 '공용에서도 받기'를 눌러요 (KbmOverlay만 허용).");
-                            Log.Warn("      - Windows 설정 > 네트워크 및 인터넷에서 연결된 네트워크를 '개인'으로 바꿔요.");
+                            Log.Warn(I18n.T("receive.public1"));
+                            Log.Warn(I18n.T("receive.public2"));
+                            Log.Warn(I18n.T("receive.public3"));
                         }
                         Thread.Sleep(5000); // start as soon as it becomes private
                         continue;
@@ -159,22 +159,22 @@ namespace KbmOverlay.Relay
                     {
                         Firewall.Status status = Firewall.Check(exePath, port);
                         bool tooNarrow = !status.Covers(required);
-                        // Turning "공용에서도 받기" off should also take Public out of our rules.
+                        // Turning "Also receive on Public networks" off should also take Public out of our rules.
                         bool tooWide = !allowPublic && (status.OwnRuleProfiles & Firewall.ProfilePublic) != 0;
                         if (tooNarrow || (tooWide && userAction))
                         {
                             if (!userAction)
                             {
                                 SetProblem(myGeneration, "firewall-needed");
-                                Log.Warn("  [!] 투컴 받기에 필요한 방화벽 허용이 없어요. 설정 페이지에서 '게임 PC 입력 받기'를 다시 눌러 주세요.");
+                                Log.Warn(I18n.T("receive.firewallNeeded"));
                                 return;
                             }
-                            Log.Info("  방화벽 규칙을 바꾸는 중이에요. Windows가 관리자 권한을 물으면 '예'를 눌러 주세요.");
+                            Log.Info(I18n.T("receive.firewallChanging"));
                             string error = Firewall.RunElevatedSetup(exePath, port, allowPublic);
                             if (error != null)
                             {
                                 SetProblem(myGeneration, "firewall-failed");
-                                Log.Error("  " + error + " 투컴 받기를 켜지 못했어요.");
+                                Log.Error(I18n.T("receive.firewallError", ("error", error)));
                                 return;
                             }
                         }
@@ -183,7 +183,7 @@ namespace KbmOverlay.Relay
                 catch (Exception e) when (e is COMException || e is InvalidCastException || e is TypeLoadException ||
                                           e is Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
                 {
-                    Log.Warn("  방화벽 상태를 확인하지 못했어요 (" + e.Message + "). 그대로 진행할게요.");
+                    Log.Warn(I18n.T("receive.firewallUnknown", ("error", e.Message)));
                 }
                 break;
             }
@@ -202,7 +202,7 @@ namespace KbmOverlay.Relay
                 {
                     StopLocked();
                     Problem = "port-in-use";
-                    Log.Error("  투컴용 포트 " + port + "를 열 수 없어요: " + e.Message);
+                    Log.Error(I18n.T("receive.portFailed", ("port", port), ("error", e.Message)));
                     changed();
                     return;
                 }
@@ -214,7 +214,7 @@ namespace KbmOverlay.Relay
                 thread.Name = "RelayAccept";
                 thread.Start();
             }
-            Log.Good("  투컴 받기 켜짐: 게임 PC에서 KbmOverlay를 실행하면 이 PC(" + NetInfo.MachineName + ")를 찾아요.");
+            Log.Good(I18n.T("receive.on", ("machine", NetInfo.MachineName)));
             changed();
         }
 
@@ -435,7 +435,7 @@ namespace KbmOverlay.Relay
             }
             catch (Exception e)
             {
-                Log.Error("게임 PC 연결을 처리하다가 오류가 났어요: " + e.Message);
+                Log.Error(I18n.T("receive.error", ("error", e.Message)));
             }
             finally
             {
@@ -461,9 +461,9 @@ namespace KbmOverlay.Relay
             }
 
             Log.Info("");
-            Log.Warn("  게임 PC '" + name + "'(" + address + ")가 이 PC로 키보드·마우스 입력을 보내려고 해요.");
-            Log.Warn("  확인 숫자: " + code + "  (게임 PC 화면의 숫자와 같으면 허용하세요)");
-            Log.Warn("  허용하려면 Y, 거절하려면 N을 누르세요. 설정 페이지에서도 고를 수 있어요.");
+            Log.Warn(I18n.T("receive.request1", ("name", name), ("address", address)));
+            Log.Warn(I18n.T("receive.request2", ("code", code)));
+            Log.Warn(I18n.T("receive.request3"));
             Native.FlashConsole();
             changed();
 
@@ -482,11 +482,11 @@ namespace KbmOverlay.Relay
             bool approved = request.Decided.IsSet && request.Approved;
             if (approved)
             {
-                Log.Good("  '" + name + "'를 허용했어요. 다음부터는 묻지 않고 연결돼요.");
+                Log.Good(I18n.T("receive.allowed", ("name", name)));
             }
             else
             {
-                Log.Info("  '" + name + "'의 연결 요청을 " + (request.Decided.IsSet ? "거절했어요." : "받지 않았어요 (시간 초과)."));
+                Log.Info(I18n.T(request.Decided.IsSet ? "receive.denied" : "receive.expired", ("name", name)));
                 lock (gate) deniedUntil[peerId + "@" + address] = DateTime.UtcNow.AddMilliseconds(DenyCooldownMs);
             }
             changed();
@@ -520,7 +520,7 @@ namespace KbmOverlay.Relay
                 active = session;
                 hub.BeginRemote(session.Id);
             }
-            Log.Good("  게임 PC '" + name + "'(" + address + ") 연결됨. 이제 오버레이에 게임 PC 입력이 보여요.");
+            Log.Good(I18n.T("receive.connected", ("name", name), ("address", address)));
             changed();
             return true;
         }
@@ -551,7 +551,7 @@ namespace KbmOverlay.Relay
                 hub.EndRemote(session.Id);
                 if (wasActive)
                 {
-                    Log.Warn("  게임 PC '" + session.Name + "' 연결이 끊겼어요. 다시 연결될 때까지 이 PC 입력을 보여줘요.");
+                    Log.Warn(I18n.T("receive.disconnected", ("name", session.Name)));
                     changed();
                 }
             }

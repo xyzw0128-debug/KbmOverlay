@@ -95,7 +95,7 @@ namespace KbmOverlay
                     if (!reportedError)
                     {
                         reportedError = true;
-                        Log.Error("입력을 읽다가 오류가 났어요: " + e.Message);
+                        Log.Error(I18n.T("error.read", ("error", e.Message)));
                     }
                 }
             }

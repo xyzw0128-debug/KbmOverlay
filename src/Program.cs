@@ -9,6 +9,7 @@ using System.Security.Principal;
 using System.Text;
 using System.Threading;
 using KbmOverlay.Relay;
+using static KbmOverlay.I18n;
 
 namespace KbmOverlay
 {
@@ -28,27 +29,13 @@ namespace KbmOverlay
             try { Console.OutputEncoding = Encoding.UTF8; } catch (IOException) { }
             Console.Title = "KbmOverlay";
 
-            // Read-only check for troubleshooting the streaming PC's firewall.
-            if (args.Length == 1 && args[0] == "--firewall-check")
-            {
-                Firewall.Status status = Firewall.Check(exePath, RelayManager.DefaultPort);
-                Console.WriteLine("exe: " + exePath);
-                Console.WriteLine("포트 " + RelayManager.DefaultPort + " 허용 (TCP / UDP / 이 exe 차단 규칙)");
-                foreach (var profile in new[] { (Firewall.ProfilePrivate, "개인"), (Firewall.ProfileDomain, "도메인"), (Firewall.ProfilePublic, "공용") })
-                {
-                    Console.WriteLine("  " + profile.Item2 + ": " +
-                                      ((status.TcpProfiles & profile.Item1) != 0 ? "예" : "아니오") + " / " +
-                                      ((status.UdpProfiles & profile.Item1) != 0 ? "예" : "아니오") + " / " +
-                                      ((status.BlockedProfiles & profile.Item1) != 0 ? "있음" : "없음"));
-                }
-                Console.WriteLine("공용 네트워크만 연결됨: " + (Firewall.OnlyPublicNetwork() ? "예" : "아니오"));
-                return 0;
-            }
-
             int? port = null;
             int dev = 0;
             bool devPublic = false;
             bool export = false;
+            bool firewallCheck = false;
+            bool badArgs = false;
+            string lang = null;
             for (int i = 0; i < args.Length; i++)
             {
                 string arg = args[i].ToLowerInvariant();
@@ -57,9 +44,17 @@ namespace KbmOverlay
                     port = p;
                     i++;
                 }
+                else if (arg == "--lang" && i + 1 < args.Length)
+                {
+                    lang = args[++i];
+                }
                 else if (arg == "--export-pages")
                 {
                     export = true;
+                }
+                else if (arg == "--firewall-check")
+                {
+                    firewallCheck = true; // read-only check for troubleshooting the streaming PC's firewall
                 }
                 else if (arg == "--dev" && i + 1 < args.Length && int.TryParse(args[i + 1], out int d) && d >= 1 && d <= 9)
                 {
@@ -73,20 +68,33 @@ namespace KbmOverlay
                 }
                 else
                 {
-                    Console.WriteLine("사용법: KbmOverlay.exe [--port 번호] [--export-pages]");
-                    Console.WriteLine("  --port 번호       기본값 " + DefaultPort + ". OBS 주소의 포트도 같이 바꿔야 해요.");
-                    Console.WriteLine("  --export-pages    내장 페이지를 exe 옆 pages 폴더로 꺼내요 (꾸미기용).");
-                    return 2;
+                    badArgs = true;
                 }
             }
 
             string version = Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
             var pages = new PageStore(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "pages"));
+            I18n.Init(pages, lang);
+
+            if (badArgs)
+            {
+                Console.WriteLine(T("usage.line"));
+                Console.WriteLine(T("usage.port", ("port", DefaultPort)));
+                Console.WriteLine(T("usage.lang"));
+                Console.WriteLine(T("usage.export"));
+                return 2;
+            }
+
+            if (firewallCheck)
+            {
+                PrintFirewallCheck(exePath);
+                return 0;
+            }
 
             if (export)
             {
                 int written = pages.Export();
-                Console.WriteLine("pages 폴더에 " + written + "개 파일을 꺼냈어요 (이미 있던 파일은 그대로 뒀어요): " + pages.OverrideDir);
+                Console.WriteLine(T("export.done", ("count", written), ("dir", pages.OverrideDir)));
                 return 0;
             }
 
@@ -95,15 +103,15 @@ namespace KbmOverlay
             {
                 if (!firstInstance)
                 {
-                    Console.WriteLine("KbmOverlay가 이미 실행 중이에요. 작업 표시줄에서 기존 창을 확인하세요.");
+                    Console.WriteLine(T("alreadyRunning"));
                     WaitBeforeClose();
                     return 1;
                 }
-                return Run(port ?? DefaultPort + 10 * dev, dev, devPublic, exePath, pages, version);
+                return Run(port ?? DefaultPort + 10 * dev, dev, devPublic, lang, exePath, pages, version);
             }
         }
 
-        private static int Run(int port, int dev, bool devPublic, string exePath, PageStore pages, string version)
+        private static int Run(int port, int dev, bool devPublic, string cliLang, string exePath, PageStore pages, string version)
         {
             bool elevated;
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
@@ -113,9 +121,13 @@ namespace KbmOverlay
                 ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "KbmOverlay")
                 : Path.Combine(Path.GetTempPath(), "KbmOverlay-dev" + dev);
             Settings settings = Settings.Load(dataDir);
+            // A language picked on the settings page applies unless --lang was given.
+            if (cliLang == null && settings.Lang != null) I18n.Use(settings.Lang);
+            // What the settings page's language menu shows: "auto" or a language code.
+            string langChoice = cliLang != null && I18n.Has(cliLang) ? cliLang : settings.Lang ?? "auto";
 
             var hub = new InputHub();
-            hub.ClientCountChanged += count => Log.Info("  연결된 페이지: " + count + "개");
+            hub.ClientCountChanged += count => Log.Info(T("pages.count", ("count", count)));
             hub.Start();
 
             var devProbes = new List<IPEndPoint>();
@@ -124,18 +136,58 @@ namespace KbmOverlay
                     if (other != dev) devProbes.Add(new IPEndPoint(IPAddress.Loopback, RelayManager.DefaultPort + 10 * other));
             var relay = new RelayManager(settings, hub, exePath, RelayManager.DefaultPort + 10 * dev, dev != 0, devPublic, devProbes);
 
+            Func<string> info = () =>
+            {
+                var languages = new List<object>();
+                foreach (KeyValuePair<string, string> language in I18n.Available())
+                    languages.Add(new Dictionary<string, object> { ["code"] = language.Key, ["name"] = language.Value });
+                return Json.Write(new Dictionary<string, object>
+                {
+                    ["name"] = "KbmOverlay",
+                    ["version"] = version,
+                    ["port"] = port,
+                    ["elevated"] = elevated,
+                    ["clients"] = hub.ClientCount,
+                    ["lang"] = I18n.Lang,
+                    ["langSetting"] = langChoice,
+                    ["systemLang"] = I18n.NameOf(I18n.SystemLang),
+                    ["languages"] = languages
+                });
+            };
+
+            Action<string> onCommand = text =>
+            {
+                Dictionary<string, object> command = Json.Parse(text);
+                if (Json.Str(command, "cmd") != "language")
+                {
+                    relay.Command(text);
+                    return;
+                }
+                string picked = Json.Str(command, "lang");
+                if (picked != "auto" && !I18n.Has(picked)) return;
+                lock (settings)
+                {
+                    settings.Lang = picked == "auto" ? null : picked;
+                    settings.Save();
+                }
+                langChoice = picked;
+                I18n.Use(picked);
+                Log.Info(T("language.changed", ("name", I18n.NameOf(I18n.Lang))));
+                hub.BroadcastStatus(relay.StatusJson());
+            };
+
             try
             {
-                new WebServer(port, pages, hub, elevated, version, relay.Command).Start();
+                new WebServer(port, pages, hub, info, onCommand).Start();
             }
             catch (SocketException e)
             {
                 if (e.SocketErrorCode == SocketError.AddressAlreadyInUse)
-                    Log.Error("포트 " + port + "를 다른 프로그램이 쓰고 있어요. 다른 번호로 실행하세요: KbmOverlay.exe --port 5530");
+                    Log.Error(T("port.inUse", ("port", port)));
                 else if (e.SocketErrorCode == SocketError.AccessDenied)
-                    Log.Error("Windows가 포트 " + port + "를 예약해 뒀어요 (Hyper-V/WSL). 다른 번호로 실행하세요: KbmOverlay.exe --port 5530");
+                    Log.Error(T("port.reserved", ("port", port)));
                 else
-                    Log.Error("포트 " + port + "를 열 수 없어요: " + e.Message);
+                    Log.Error(T("port.failed", ("port", port), ("error", e.Message)));
                 Log.Flush();
                 WaitBeforeClose();
                 return 1;
@@ -147,34 +199,34 @@ namespace KbmOverlay
             }
             catch (Exception e)
             {
-                Log.Error("키보드·마우스 입력을 받을 수 없어요: " + e.Message);
+                Log.Error(T("input.failed", ("error", e.Message)));
                 Log.Flush();
                 WaitBeforeClose();
                 return 1;
             }
 
             string root = "http://localhost:" + port + "/";
-            Log.Accent("KbmOverlay " + version + "  키보드·마우스 오버레이" + (dev != 0 ? "  [개발용 " + dev + "]" : ""));
+            Log.Accent(T("banner.title", ("version", version)) + (dev != 0 ? T("banner.dev", ("n", dev)) : ""));
             Log.Info("");
-            Log.Good("  설정 페이지  " + root + "   (Enter를 누르면 브라우저로 열려요)");
-            Log.Info("               OBS 주소 복사, 권장 크기, 미리보기, 투컴 설정이 있어요.");
+            Log.Good(T("banner.settings", ("url", root)));
+            Log.Info(T("banner.settingsHint"));
             Log.Info("");
-            Log.Info("  OBS 브라우저 소스 주소 (투컴이어도 OBS가 있는 PC에서는 이 주소 그대로예요)");
-            Url(root + "keyboard.html", "키보드 (WASD)");
-            Url(root + "keyboard.html?layout=tkl", "키보드 (텐키리스)");
-            Url(root + "keyboard.html?layout=full", "키보드 (풀배열)");
-            Url(root + "mouse.html", "마우스");
-            Url(root + "mouse-move.html", "마우스 이동");
+            Log.Info(T("banner.urls"));
+            Url(root + "keyboard.html", T("overlay.keyboardWasd"));
+            Url(root + "keyboard.html?layout=tkl", T("overlay.keyboardTkl"));
+            Url(root + "keyboard.html?layout=full", T("overlay.keyboardFull"));
+            Url(root + "mouse.html", T("overlay.mouse"));
+            Url(root + "mouse-move.html", T("overlay.mouseMove"));
             Log.Info("");
             foreach (string line in relay.Describe()) Log.Info(line);
             Log.Info("");
             if (!elevated)
             {
-                Log.Warn("  [!] 관리자 권한이 아니에요. 관리자 권한으로 실행한 게임의 입력은 안 보일 수 있어요.");
-                Log.Warn("      그럴 땐 이 프로그램을 우클릭 → \"관리자 권한으로 실행\".");
+                Log.Warn(T("banner.notAdmin1"));
+                Log.Warn(T("banner.notAdmin2"));
                 Log.Info("");
             }
-            Log.Info("  끄려면 이 창을 닫으세요.");
+            Log.Info(T("banner.close"));
             Log.Info("");
 
             relay.Start();
@@ -194,6 +246,22 @@ namespace KbmOverlay
             }
         }
 
+        private static void PrintFirewallCheck(string exePath)
+        {
+            Firewall.Status status = Firewall.Check(exePath, RelayManager.DefaultPort);
+            string YesNo(bool value) => value ? T("fwcheck.yes") : T("fwcheck.no");
+            Console.WriteLine("exe: " + exePath);
+            Console.WriteLine(T("fwcheck.title", ("port", RelayManager.DefaultPort)));
+            foreach ((int Profile, string Key) row in new[] { (Firewall.ProfilePrivate, "fwcheck.private"), (Firewall.ProfileDomain, "fwcheck.domain"), (Firewall.ProfilePublic, "fwcheck.public") })
+            {
+                Console.WriteLine("  " + T(row.Key) + ": " +
+                                  YesNo((status.TcpProfiles & row.Profile) != 0) + " / " +
+                                  YesNo((status.UdpProfiles & row.Profile) != 0) + " / " +
+                                  ((status.BlockedProfiles & row.Profile) != 0 ? T("fwcheck.yes") : T("fwcheck.none")));
+            }
+            Console.WriteLine(T("fwcheck.onlyPublic", ("value", YesNo(Firewall.OnlyPublicNetwork()))));
+        }
+
         private static void Url(string url, string label)
         {
             Log.Info("    " + url.PadRight(50) + label);
@@ -207,14 +275,14 @@ namespace KbmOverlay
             }
             catch (Exception e)
             {
-                Log.Warn("브라우저를 열 수 없어요 (" + e.Message + "). 주소를 직접 열어 주세요: " + url);
+                Log.Warn(T("browser.failed", ("error", e.Message), ("url", url)));
             }
         }
 
         private static void WaitBeforeClose()
         {
             if (Console.IsInputRedirected) return;
-            Console.WriteLine("아무 키나 누르면 창이 닫혀요.");
+            Console.WriteLine(T("pressKeyToClose"));
             Console.ReadKey(true);
         }
     }

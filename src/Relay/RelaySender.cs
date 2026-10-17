@@ -90,7 +90,7 @@ namespace KbmOverlay.Relay
                 message = null;
                 current?.Close();
             }
-            Log.Info("  방송 PC '" + receiver.Name + "'에 연결을 요청할게요.");
+            Log.Info(I18n.T("send.requesting", ("name", receiver.Name)));
             wake.Set();
             changed();
             return true;
@@ -108,9 +108,9 @@ namespace KbmOverlay.Relay
                 text = text.Substring(0, colon);
             }
             if (!IPAddress.TryParse(text, out IPAddress address) || address.AddressFamily != AddressFamily.InterNetwork)
-                return "IP 주소 형식이 아니에요 (예: 192.168.0.20).";
+                return I18n.T("send.badAddress");
             if (!NetInfo.IsLan(address))
-                return "같은 공유기(사설 네트워크) 안의 주소만 쓸 수 있어요.";
+                return I18n.T("send.notLan");
             lock (gate)
             {
                 consent = new Target { Address = address.ToString(), Port = port, Name = address.ToString() };
@@ -118,7 +118,7 @@ namespace KbmOverlay.Relay
                 message = null;
                 current?.Close();
             }
-            Log.Info("  " + address + "에 연결을 요청할게요.");
+            Log.Info(I18n.T("send.requestingAddress", ("address", address)));
             wake.Set();
             changed();
             return null;
@@ -139,7 +139,7 @@ namespace KbmOverlay.Relay
                 message = null;
                 current?.Close();
             }
-            Log.Info("  방송 PC로 보내기를 껐어요.");
+            Log.Info(I18n.T("send.stopped"));
             wake.Set();
             searchNow.Set();
             changed();
@@ -156,7 +156,7 @@ namespace KbmOverlay.Relay
                 lock (gate) list = new List<FoundReceiver>(found);
                 if (list.Count == 0)
                 {
-                    Log.Info("  아직 찾은 방송 PC가 없어요. 방송 PC의 KbmOverlay에서 '게임 PC 입력 받기'가 켜져 있는지 확인하세요.");
+                    Log.Info(I18n.T("send.noneFound"));
                     SearchNow();
                 }
                 else if (list.Count == 1)
@@ -166,7 +166,7 @@ namespace KbmOverlay.Relay
                 else
                 {
                     lock (gate) choosing = list.GetRange(0, Math.Min(9, list.Count));
-                    Log.Info("  보낼 방송 PC의 번호를 누르세요:");
+                    Log.Info(I18n.T("send.pickNumber"));
                     for (int i = 0; i < choosing.Count; i++)
                         Log.Info("    " + (i + 1) + ". " + choosing[i].Name + " (" + choosing[i].Address + ")");
                 }
@@ -224,7 +224,7 @@ namespace KbmOverlay.Relay
                 }
                 catch (Exception e)
                 {
-                    Log.Error("방송 PC를 찾다가 오류가 났어요: " + e.Message);
+                    Log.Error(I18n.T("send.searchError", ("error", e.Message)));
                 }
                 searchNow.WaitOne(SearchEveryMs);
             }
@@ -256,8 +256,8 @@ namespace KbmOverlay.Relay
             foreach (FoundReceiver f in fresh)
             {
                 Log.Info("");
-                Log.Accent("  방송 PC '" + f.Name + "'(" + f.Address + ")를 찾았어요.");
-                Log.Accent("  이 PC의 키보드·마우스 입력을 그쪽으로 보내려면 이 창에서 S를 누르세요 (설정 페이지에서도 돼요).");
+                Log.Accent(I18n.T("send.found1", ("name", f.Name), ("address", f.Address)));
+                Log.Accent(I18n.T("send.found2"));
             }
             if (results.Count > 0) wake.Set();
             if (listChanged) changed();
@@ -275,7 +275,7 @@ namespace KbmOverlay.Relay
                 }
                 catch (Exception e)
                 {
-                    Log.Error("방송 PC 연결 중 오류가 났어요: " + e.Message);
+                    Log.Error(I18n.T("send.connectError", ("error", e.Message)));
                     wake.WaitOne(RetryMs);
                 }
             }
@@ -312,7 +312,7 @@ namespace KbmOverlay.Relay
             {
                 case Outcome.Ended:
                     if (PickTarget(out _) != null) // not when the user just turned sending off
-                        Log.Warn("  방송 PC '" + target.Name + "'와 연결이 끊겼어요. 다시 연결하는 중이에요.");
+                        Log.Warn(I18n.T("send.lost", ("name", target.Name)));
                     SetState("retrying", target.Name, null);
                     wake.WaitOne(1000);
                     break;
@@ -324,23 +324,23 @@ namespace KbmOverlay.Relay
                     wake.WaitOne(RetryMs);
                     break;
                 case Outcome.Denied:
-                    Log.Warn("  방송 PC에서 연결을 거절했어요.");
+                    Log.Warn(I18n.T("send.denied"));
                     DropPairing(target.Id);
                     lock (gate)
                     {
                         consent = null;
-                        message = "방송 PC에서 거절했어요.";
+                        message = I18n.T("send.deniedShort");
                     }
                     SetState("denied", target.Name, null);
                     break;
                 case Outcome.Forgotten:
-                    Log.Warn("  방송 PC '" + target.Name + "'가 이 PC를 기억하지 못해요. 다시 보내려면 S를 누르세요.");
+                    Log.Warn(I18n.T("send.forgotten", ("name", target.Name)));
                     DropPairing(target.Id);
                     lock (gate)
                     {
                         forgottenId = target.Id;
                         announced.Remove(target.Id ?? "");
-                        message = "방송 PC가 이 PC를 기억하지 못해요. 다시 골라 주세요.";
+                        message = I18n.T("send.forgottenShort");
                     }
                     SetState("forgotten", target.Name, null);
                     break;
@@ -374,7 +374,7 @@ namespace KbmOverlay.Relay
                 IAsyncResult pendingConnect = tcp.BeginConnect(target.Address, target.Port, null, null);
                 if (!pendingConnect.AsyncWaitHandle.WaitOne(ConnectTimeoutMs))
                 {
-                    failure = "방송 PC(" + target.Address + ")에 연결할 수 없어요. 두 PC가 같은 공유기에 있는지, 방송 PC에서 받기가 켜져 있는지 확인하세요.";
+                    failure = I18n.T("send.unreachable", ("address", target.Address));
                     return Outcome.Failed;
                 }
                 tcp.EndConnect(pendingConnect);
@@ -401,12 +401,12 @@ namespace KbmOverlay.Relay
                     byte[] serverKey = Convert.FromBase64String(Json.Str(hello, "pub") ?? "");
                     if (Json.Long(hello, "kbmo") != 1 || !Settings.IsId(serverId) || serverId == settings.Id || !RelayCrypto.IsPublicBlob(serverKey))
                     {
-                        failure = target.Address + "는 KbmOverlay 방송 PC가 아니에요.";
+                        failure = I18n.T("send.notKbm", ("address", target.Address));
                         return Outcome.Failed;
                     }
                     if (target.Id != null && serverId != target.Id)
                     {
-                        failure = target.Address + "에 다른 PC가 있어요. 방송 PC를 다시 찾는 중이에요.";
+                        failure = I18n.T("send.otherPc", ("address", target.Address));
                         return Outcome.Failed;
                     }
                     target.Name = serverName;
@@ -432,13 +432,13 @@ namespace KbmOverlay.Relay
                                 byte[] proof = Convert.FromBase64String(Json.Str(reply, "proof") ?? "");
                                 if (!RelayCrypto.SameBytes(proof, RelayCrypto.Proof(secret, "server", keys.Transcript)))
                                 {
-                                    failure = "방송 PC 확인에 실패했어요.";
+                                    failure = I18n.T("send.verifyFailed");
                                     return Outcome.Failed;
                                 }
                                 Remember(serverId, serverName, target, secret);
                                 return Send(tcp, stream, channel, serverName);
                             case "busy":
-                                failure = "방송 PC에 다른 게임 PC가 연결돼 있어요.";
+                                failure = I18n.T("send.busy");
                                 return Outcome.Failed;
                             default:
                                 return Outcome.Forgotten;
@@ -451,8 +451,8 @@ namespace KbmOverlay.Relay
                     lock (gate) message = null;
                     SetState("waiting", serverName, keys.Code);
                     Log.Info("");
-                    Log.Accent("  방송 PC '" + serverName + "' 화면에서 '허용'을 눌러 주세요.");
-                    Log.Accent("  확인 숫자: " + keys.Code + "  (방송 PC에 나온 숫자와 같아야 해요)");
+                    Log.Accent(I18n.T("send.waiting1", ("name", serverName)));
+                    Log.Accent(I18n.T("send.waiting2", ("code", keys.Code)));
                     stream.ReadTimeout = 75000;
                     Dictionary<string, object> answer = Json.Parse(channel.Receive(HandshakeLimit));
                     switch (Json.Str(answer, "type"))
@@ -461,7 +461,7 @@ namespace KbmOverlay.Relay
                             Remember(serverId, serverName, target, keys.PairSecret);
                             return Send(tcp, stream, channel, serverName);
                         case "busy":
-                            failure = "방송 PC가 다른 연결을 처리하고 있어요.";
+                            failure = I18n.T("send.busyPairing");
                             return Outcome.Failed;
                         default:
                             return Outcome.Denied;
@@ -473,7 +473,7 @@ namespace KbmOverlay.Relay
                                       e is FormatException)
             {
                 if (state == "waiting") return Outcome.Denied; // no answer in time, or the request was cancelled
-                failure = failure ?? "방송 PC(" + target.Address + ")와 연결하지 못했어요.";
+                failure = failure ?? I18n.T("send.failed", ("address", target.Address));
                 return state == "sending" ? Outcome.Ended : Outcome.Failed;
             }
             finally
@@ -525,7 +525,7 @@ namespace KbmOverlay.Relay
                 lastLogged = null;
             }
             SetState("sending", serverName, null);
-            Log.Good("  방송 PC '" + serverName + "'로 입력을 보내는 중이에요.");
+            Log.Good(I18n.T("send.sending", ("name", serverName)));
 
             var reader = new Thread(() =>
             {

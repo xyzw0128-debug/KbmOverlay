@@ -10,13 +10,15 @@ namespace KbmOverlay.Relay
     // ("--firewall-setup <port>"), so the program itself never runs elevated for this.
     //
     // The rules allow only this exe, only the relay port (TCP and UDP), only from the local subnet,
-    // and only on Private/Domain networks, plus Public ones if the user chose "공용에서도 받기".
+    // and only on Private/Domain networks, plus Public ones if the user chose "Also receive on Public networks".
     // Adding them before the first listen also keeps Windows from showing its own firewall popup,
     // which creates Block rules when it is cancelled.
     internal static class Firewall
     {
-        public const string RuleTcp = "KbmOverlay 투컴 받기 (TCP)";
-        public const string RuleUdp = "KbmOverlay 투컴 받기 (UDP)";
+        public const string RuleTcp = "KbmOverlay two-PC relay (TCP)";
+        public const string RuleUdp = "KbmOverlay two-PC relay (UDP)";
+        // Names used by versions 0.2 and 0.3; still recognized and replaced.
+        private static readonly string[] OldRuleNames = { "KbmOverlay 투컴 받기 (TCP)", "KbmOverlay 투컴 받기 (UDP)" };
 
         public const int ProfileDomain = 1;
         public const int ProfilePrivate = 2;
@@ -59,7 +61,7 @@ namespace KbmOverlay.Relay
                 if ((int)rule.Direction != DirectionIn || !(bool)rule.Enabled) continue;
                 int profiles = rule.Profiles;
                 string name = rule.Name;
-                if (name == RuleTcp || name == RuleUdp) status.OwnRuleProfiles |= profiles;
+                if (IsOwnRule(name)) status.OwnRuleProfiles |= profiles;
 
                 if ((int)rule.Action == ActionBlock)
                 {
@@ -95,6 +97,7 @@ namespace KbmOverlay.Relay
 
                 RemoveAll(rules, RuleTcp);
                 RemoveAll(rules, RuleUdp);
+                foreach (string old in OldRuleNames) RemoveAll(rules, old);
                 rules.Add(NewRule(RuleTcp, exePath, ProtocolTcp, port, profiles));
                 rules.Add(NewRule(RuleUdp, exePath, ProtocolUdp, port, profiles));
                 return 0;
@@ -118,15 +121,17 @@ namespace KbmOverlay.Relay
             {
                 using (Process process = Process.Start(info))
                 {
-                    if (!process.WaitForExit(60000)) return "방화벽 설정이 끝나지 않았어요.";
-                    return process.ExitCode == 0 ? null : "방화벽 규칙을 추가하지 못했어요.";
+                    if (!process.WaitForExit(60000)) return I18n.T("firewall.timeout");
+                    return process.ExitCode == 0 ? null : I18n.T("firewall.failed");
                 }
             }
             catch (Win32Exception e) when (e.NativeErrorCode == 1223)
             {
-                return "관리자 권한 요청(UAC)이 취소됐어요.";
+                return I18n.T("firewall.uacCancelled");
             }
         }
+
+        private static bool IsOwnRule(string name) => name == RuleTcp || name == RuleUdp || Array.IndexOf(OldRuleNames, name) >= 0;
 
         private static dynamic Policy()
         {
@@ -137,7 +142,7 @@ namespace KbmOverlay.Relay
         {
             dynamic rule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule", true));
             rule.Name = name;
-            rule.Description = "KbmOverlay: 같은 네트워크의 게임 PC에서 키보드·마우스 입력을 받아요.";
+            rule.Description = "KbmOverlay: receives keyboard and mouse input from a game PC on the same network.";
             rule.ApplicationName = exePath;
             rule.Protocol = protocol;
             rule.LocalPorts = port.ToString();

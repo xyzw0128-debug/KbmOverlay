@@ -30,6 +30,7 @@ namespace KbmOverlay
         public string Id;              // this PC's id, sent to other PCs
         public bool Receive;           // this PC accepts input from game PCs
         public bool AllowPublic;       // ...also while connected to a "Public" network
+        public string Lang;            // language picked on the settings page; null = automatic
         public readonly List<Peer> Senders = new List<Peer>();  // game PCs allowed to send here
         public Peer Receiver;          // streaming PC this PC sends to
 
@@ -51,6 +52,7 @@ namespace KbmOverlay
                     settings.Id = Json.Str(root, "id");
                     settings.Receive = Json.Bool(root, "receive") ?? false;
                     settings.AllowPublic = Json.Bool(root, "allowPublic") ?? false;
+                    settings.Lang = Json.Str(root, "lang");
                     foreach (object item in Json.Array(root, "senders") ?? new object[0])
                     {
                         Peer peer = ReadPeer(item as Dictionary<string, object>);
@@ -62,7 +64,7 @@ namespace KbmOverlay
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
-                Log.Warn("설정 파일을 읽지 못해서 새로 시작해요: " + e.Message);
+                Log.Warn(I18n.T("settings.readFailed", ("error", e.Message)));
             }
 
             if (!IsId(settings.Id))
@@ -82,6 +84,7 @@ namespace KbmOverlay
                 ["id"] = Id,
                 ["receive"] = Receive,
                 ["allowPublic"] = AllowPublic,
+                ["lang"] = Lang,
                 ["senders"] = senders,
                 ["receiver"] = Receiver == null ? null : WritePeer(Receiver)
             };
@@ -96,7 +99,7 @@ namespace KbmOverlay
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
-                Log.Error("설정을 저장하지 못했어요: " + e.Message);
+                Log.Error(I18n.T("settings.saveFailed", ("error", e.Message)));
             }
         }
 
