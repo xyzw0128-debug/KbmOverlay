@@ -33,10 +33,10 @@ or its input will not show.
 Run `KbmOverlay.exe` on both PCs. They must be on the same network (same router).
 
 **Streaming PC (the one with OBS), first time only**
-1. In the **Two PCs** part of the settings page, press **Receive from game PCs**.
+1. On the settings page, choose **Two PCs** in the menu on the left and turn on the **Receive from game PCs** switch.
 2. When Windows asks for administrator permission, choose **Yes**. This allows KbmOverlay in the firewall.
-   - If the network is set to **Public**, the page tells you. Either press **Also receive on Public networks**
-     (allows KbmOverlay only), or set the network to **Private** in Windows Settings. See [Public networks](#public-networks).
+   - If the network is set to **Public**, the page tells you. Either turn on the **Also receive on Public networks**
+     switch (allows KbmOverlay only), or set the network to **Private** in Windows Settings. See [Public networks](#public-networks).
 3. In OBS, use the same `http://localhost:5520/...` URLs as with one PC.
 
 **Game PC, first time only**
@@ -50,11 +50,11 @@ the streaming PC's overlays show the game PC's input. If the connection drops, h
 overlays show the streaming PC's own input again.
 
 - If the game PC cannot find the streaming PC (some routers block devices from seeing each other), enter the streaming
-  PC's IP on the game PC's settings page. The streaming PC's settings page shows its IP in the Two PCs part.
+  PC's IP on the game PC's settings page. The streaming PC's settings page shows its IP under Two PCs.
 - To stop, press **Stop sending** on the game PC. To remove an allowed game PC, press **Remove** on the streaming PC.
 - Two PCs use port **5521** (TCP and UDP). The firewall rules ("KbmOverlay two-PC relay") are added only on the
   streaming PC, for KbmOverlay.exe only, from the local subnet only, on Private/Domain networks only.
-  If you move the exe to another folder, press **Receive from game PCs** once more to update the rules.
+  If you move the exe to another folder, press **Allow in the firewall** under Two PCs to update the rules.
 
 ### Public networks
 
@@ -62,12 +62,12 @@ Windows 11 often marks new networks as Public, even a home router. If the stream
 
 | Option | What it opens |
 |---|---|
-| **Also receive on Public networks** (button on the settings page) | KbmOverlay.exe only, port 5521 only, connections from the same network only |
+| **Also receive on Public networks** (switch on the settings page) | KbmOverlay.exe only, port 5521 only, connections from the same network only |
 | Set the network to **Private** | Windows features such as network discovery and file and printer sharing also trust that network |
 
 **Also receive on Public networks** opens less. It also applies on real public networks such as café Wi-Fi, but the
-streaming PC only *receives* input, and nobody can connect without you allowing them. To turn it off, press
-**Stop receiving on Public networks**. The game PC needs no changes on a Public network.
+streaming PC only *receives* input, and nobody can connect without you allowing them. To stop it, turn the
+**Also receive on Public networks** switch off. The game PC needs no changes on a Public network.
 
 ## Overlay URLs
 
@@ -80,6 +80,11 @@ streaming PC only *receives* input, and nobody can connect without you allowing 
 Add options after `?` and join them with `&`, e.g. `keyboard.html?layout=full&scale=0.8`.
 Add `bg=1` to any page to give it a background, which makes it easier to check in a normal browser.
 
+Every page also takes colors, as 6 hex digits without `#`: `pressed` (held), `released` (start of the fade),
+`glow` (keyboard only) and `line` (outline), e.g. `keyboard.html?pressed=1F6FEB&line=FFCC00`. You don't need to type
+them: pick colors in the **Colors** box on the settings page and copy the URL. Changing colors there does not change
+sources already in OBS; copy the URL again and replace it in the source.
+
 ## Languages
 
 The console window and the settings page are available in **English, Korean (한국어), Japanese (日本語) and
@@ -87,7 +92,7 @@ Simplified Chinese (简体中文)**. Overlays have no text, so they look the sam
 
 KbmOverlay picks the language in this order:
 1. `--lang` when starting it, e.g. `KbmOverlay.exe --lang ja`
-2. the language chosen in the menu at the top right of the settings page (remembered)
+2. the language chosen at the bottom left of the settings page (remembered)
 3. the Windows display language
 4. English
 
@@ -100,6 +105,9 @@ The Japanese and Chinese translations were not written by native speakers; corre
 
 ## Customizing
 
+To change only the colors, use the **Colors** box on the settings page (see [Overlay URLs](#overlay-urls)); no
+files needed. For anything else, such as layouts or animations:
+
 ```bash
 KbmOverlay.exe --export-pages
 ```
@@ -108,7 +116,7 @@ This creates a `pages` folder next to the exe. Files there take priority over th
 refresh the source in OBS to see the change. Delete a file to go back to the built-in version.
 
 - Change the colors at the top of `theme.css` (`--pressed`, `--released`, `--glow`, …) and the animation times;
-  every overlay follows them.
+  every overlay follows them. Colors in an overlay URL win over these.
 - Add `layouts/name.json` and use it as `keyboard.html?layout=name`.
 
 ### Keyboard layout files
@@ -186,6 +194,8 @@ KbmOverlay handles key input, so here is exactly what it does and does not do.
   - pairing secrets (encrypted with your Windows account)
 
   Delete that folder after removing KbmOverlay and nothing is left.
+- The settings page remembers the menu, options and colors you picked and the URLs you last copied in that browser
+  (local storage for `localhost:5520`). No key input goes there.
 - With two PCs, other KbmOverlay instances on the same network can see this PC's **computer name** (e.g.
   `DESKTOP-ABC123`) and its random ID. While receiving is on, so can any KbmOverlay on the network that is looking
   for a streaming PC.
@@ -220,19 +230,19 @@ If you find a security problem, report it privately as described in [SECURITY.md
 
 ## Troubleshooting
 
-- **Nothing shows:** on the settings page, check that the top says "connected" and that "Last key" changes when you
-  press a key. If it does, check the OBS source (URL, size, "Local file" unchecked).
+- **Nothing shows:** on the settings page, check that the top left says "connected" and that "Last key" changes when
+  you press a key. If it does, check the OBS source (URL, size, "Local file" unchecked).
 - **Only games do not show:** the game probably runs as administrator. Run KbmOverlay as administrator too.
 - **"Port … is used" or "reserved":** start with another number, e.g. `KbmOverlay.exe --port 5530`, and change the
   port in your OBS URLs.
 - **Two PCs: the game PC does not find the streaming PC.**
-  - Check that the Two PCs part on the streaming PC says it is waiting for a game PC.
-  - If it says the network is Public, press **Also receive on Public networks**, or set the network to **Private** in
-    Windows Settings > Network & internet.
+  - Check that Two PCs on the streaming PC's settings page says it is waiting for a game PC.
+  - If it says the network is Public, turn on **Also receive on Public networks**, or set the network to **Private**
+    in Windows Settings > Network & internet.
   - If it still fails, enter the streaming PC's IP on the game PC's settings page.
   - Run `KbmOverlay.exe --firewall-check` on the streaming PC to see whether the firewall rules exist.
-- **Two PCs: the game PC's input does not show on the streaming PC.** Check that the top of the streaming PC's settings
-  page says it is showing the game PC. If it does and input still does not show, run KbmOverlay on the game PC as
+- **Two PCs: the game PC's input does not show on the streaming PC.** Check that the top left of the streaming PC's
+  settings page says it is showing the game PC. If it does and input still does not show, run KbmOverlay on the game PC as
   administrator (when the game runs as administrator).
 
 ## Building
@@ -265,7 +275,7 @@ The build stops if the tag and `<Version>` differ. If a release with that tag al
 ## License and credits
 
 KbmOverlay is released under the MIT license; see `LICENSE`.
-Both notices are also built into the exe and shown at **Licenses and credits** at the bottom of the settings page
+Both notices are also built into the exe and shown at **Licenses and credits** under **About** on the settings page
 (`http://localhost:5520/licenses.html`).
 
 The mouse picture (`mouse.svg`), the key and mouse colors and animations, the mouse movement ring and the key name

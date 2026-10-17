@@ -22,6 +22,14 @@
         document.documentElement.style.background = bg && bg !== '1' ? bg : '#202124';
     }
 
+    // ?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF (hex without #) win over the colors in
+    // theme.css, so each OBS source can have its own colors. The settings page builds these.
+    var COLOR_PARAMS = { pressed: '--pressed', released: '--released', glow: '--glow', line: '--line' };
+    Object.keys(COLOR_PARAMS).forEach(function (name) {
+        var value = params.get(name);
+        if (value && /^[0-9A-Fa-f]{6}$/.test(value)) document.documentElement.style.setProperty(COLOR_PARAMS[name], '#' + value);
+    });
+
     function connect(want) {
         var handlers = {};
         var keys = new Set();

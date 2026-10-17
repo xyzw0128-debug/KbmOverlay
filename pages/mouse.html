@@ -41,7 +41,7 @@
 
             function start(svgText) {
                 var holder = document.getElementById('mouse');
-                holder.innerHTML = svgText;
+                holder.innerHTML = svgText.replace(/stroke:#ffffff/gi, 'stroke:var(--line)'); // outline follows theme.css / ?line=
                 var svg = holder.querySelector('svg');
                 svg.removeAttribute('width');
                 svg.removeAttribute('height');

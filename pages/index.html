@@ -8,219 +8,392 @@
     <style>
         :root {
             --bg: #16171a;
+            --side: #1b1c20;
             --card: #1f2126;
+            --hover: #26282e;
             --line: #33363d;
             --text: #e8e9ec;
             --muted: #9a9ea8;
             --accent: #2DA026;
             --warn: #f2b84b;
             --bad: #e5534b;
+            --link: #8ab4f8;
             --font: "Segoe UI", "Malgun Gothic", "Yu Gothic UI", "Microsoft YaHei UI", sans-serif;
         }
         * { box-sizing: border-box; }
         [hidden] { display: none !important; }
         html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); }
-        main { max-width: 980px; margin: 0 auto; padding: 28px 16px 48px; }
-        h1 { font-size: 22px; margin: 0; }
-        h2 { font-size: 17px; margin: 0 0 12px; }
-        h3 { font-size: 15px; margin: 0 0 8px; }
+        h2 { font-size: 20px; margin: 0 0 14px; }
+        h3 { font-size: 15px; margin: 0 0 10px; }
+        p { margin: 0; }
+        a { color: var(--link); }
         .muted { color: var(--muted); }
         .good { color: var(--accent); }
         .warn { color: var(--warn); }
         .bad { color: var(--bad); }
-        header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px 16px; margin-bottom: 20px; }
-        .header-main { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; min-width: 0; }
-        /* Top-right corner, with a globe so it can be found in a language you cannot read. */
-        .language { flex-shrink: 0; gap: 6px; padding: 3px 4px 3px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); }
-        .language svg { width: 16px; height: 16px; color: var(--muted); }
-        .language select { border: 0; background: transparent; padding: 3px 2px; cursor: pointer; }
-        .language select option { background: var(--card); color: var(--text); }
-        .pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 14px; }
-        .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+        .small { font-size: 13px; }
+
+        /* ---- menu on the left, one panel on the right ---- */
+        .app { display: grid; grid-template-columns: 232px minmax(0, 1fr); min-height: 100vh; }
+        .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+                   padding: 18px 12px; background: var(--side); border-right: 1px solid var(--line); }
+        .summary { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 8px 16px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+        .brand { font-size: 18px; font-weight: 600; }
+        .brand .muted { margin-left: 6px; font-size: 13px; font-weight: 400; }
+        .pill { display: inline-flex; align-items: center; gap: 8px; padding: 3px 11px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); font-size: 13px; }
+        .dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
         .pill.ok .dot { background: var(--accent); }
-        .last-input { font-variant-numeric: tabular-nums; }
+        .last-input { font-size: 13px; font-variant-numeric: tabular-nums; }
+        nav { display: flex; flex-direction: column; gap: 2px; }
+        .nav-group { padding: 12px 10px 4px; font-size: 12px; color: var(--muted); }
+        nav a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; }
+        nav a:hover { background: var(--hover); color: var(--text); }
+        nav a[aria-current="page"] { background: var(--card); color: var(--text); font-weight: 600; }
+        nav svg { width: 18px; height: 18px; flex-shrink: 0; }
+        .badge { margin-left: auto; min-width: 18px; padding: 0 6px; border-radius: 9px; background: var(--warn); color: #1a1405; font-size: 12px; font-weight: 600; text-align: center; }
+        /* Bottom of the menu, with a globe so it can be found in a language you cannot read. */
+        .language { margin-top: auto; display: flex; align-items: center; gap: 6px; padding: 14px 10px 0; color: var(--muted); }
+        .language svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .language select { flex: 1; min-width: 0; }
+        main { width: 100%; max-width: 1080px; padding: 28px 28px 48px; }
+
+        /* ---- shared pieces ---- */
         .notice { border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
-        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
         .banner { border: 2px solid var(--warn); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; background: var(--card); }
         .banner p { margin: 0 0 6px; }
         .banner .code { font: 600 28px/1.2 Consolas, monospace; letter-spacing: 2px; color: var(--warn); }
-        ol.steps { margin: 0; padding-left: 20px; }
-        ol.steps li { margin: 2px 0; }
-        .options { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 12px; align-items: center; }
-        label { color: var(--muted); font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
-        select, input[type=number] { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: inherit; }
-        input[type=number] { width: 80px; }
-        .preview { position: relative; overflow: hidden; border-radius: 8px; margin-bottom: 12px; min-height: 60px;
-                   background: #0b0c0e repeating-conic-gradient(#14161a 0% 25%, #0b0c0e 0% 50%) 0 0 / 24px 24px; }
-        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; }
-        .url-row { display: flex; gap: 8px; flex-wrap: wrap; }
-        .url-row input { flex: 1 1 320px; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 14px Consolas, monospace; }
-        button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font: inherit; cursor: pointer; }
+        .box { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+        .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; align-items: start; }
+        .columns.two { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+        .prose p + p { margin-top: 10px; }
+        .intro { margin: -4px 0 16px; }
+        select, input { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; font-size: 14px; }
+        button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font: inherit; font-size: 14px; cursor: pointer; }
         button:active { transform: translateY(1px); }
         button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
         button.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
+        button.link { background: none; border: 0; padding: 0; color: var(--link); font-size: 12px; }
         button:disabled { opacity: 0.5; cursor: default; }
-        .size { margin-top: 8px; font-size: 14px; }
-        .size b { font-variant-numeric: tabular-nums; }
+        button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
         code { font-family: Consolas, monospace; font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
         .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
-        .row input { flex: 1 1 200px; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: inherit; }
-        .relay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
-        .relay-box { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
-        .relay-box p { margin: 0; }
-        .peer-list { list-style: none; margin: 10px 0 0; padding: 0; }
+        .row input { flex: 1 1 200px; min-width: 0; padding: 7px 10px; }
+
+        /* ---- overlay panels: big preview on top, three boxes below ---- */
+        .preview { position: relative; overflow: hidden; min-height: 140px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 12px;
+                   background: #0b0c0e repeating-conic-gradient(#14161a 0% 25%, #0b0c0e 0% 50%) 0 0 / 24px 24px; }
+        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; }
+        .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+        .field select, .field input { width: 100%; }
+        .url { width: 100%; margin-bottom: 8px; font: 13px Consolas, monospace; }
+        .copy { width: 100%; }
+        .changed { margin-top: 8px; }
+        .size { margin-top: 10px; font-size: 13px; }
+        .size b { color: var(--text); font-variant-numeric: tabular-nums; }
+        .howto { margin-top: 10px; font-size: 13px; }
+        .howto summary { cursor: pointer; color: var(--link); }
+        ol.steps { margin: 8px 0; padding-left: 20px; }
+        ol.steps li { margin: 2px 0; }
+        .swatches { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+        button.swatch { width: 28px; height: 28px; padding: 0; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); }
+        button.swatch[aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: 2px; }
+        .color-row { display: grid; grid-template-columns: minmax(0, 1fr) 36px 92px; gap: 8px; align-items: center; margin-top: 8px; font-size: 13px; color: var(--muted); }
+        .color-row input[type=color] { width: 36px; height: 30px; padding: 2px; cursor: pointer; }
+        .hex { width: 100%; font: 13px Consolas, monospace; text-transform: uppercase; }
+        .hex.invalid { border-color: var(--bad); }
+        .color-footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-top: 12px; font-size: 12px; }
+
+        /* ---- two PCs ---- */
+        .switch-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+        .switch-row.sub { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .switch-title { font-weight: 600; margin-bottom: 2px; }
+        .switch-row p { font-size: 13px; }
+        .switch { position: relative; flex-shrink: 0; width: 44px; height: 24px; margin-top: 2px; }
+        .switch input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+        .switch span { position: absolute; inset: 0; border-radius: 12px; background: #43464f; pointer-events: none; transition: background 0.15s; }
+        .switch span::after { content: ""; position: absolute; left: 3px; top: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
+        .switch input:checked + span { background: var(--accent); }
+        .switch input:checked + span::after { transform: translateX(20px); }
+        .switch input:focus-visible + span { outline: 2px solid var(--link); outline-offset: 2px; }
+        .switch input:disabled { cursor: default; }
+        .switch input:disabled + span, .switch.busy span { opacity: 0.5; }
+        .peer-list { list-style: none; margin: 12px 0 0; padding: 0; }
         .peer-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
-        .peer-list li:first-child { border-top: 0; }
         .peer-list button { flex-shrink: 0; white-space: nowrap; }
-        footer { margin-top: 24px; font-size: 13px; line-height: 1.8; }
-        footer a { color: #8ab4f8; }
+        #send-text { font-size: 13px; }
+
+        @media (max-width: 760px) {
+            .app { grid-template-columns: minmax(0, 1fr); }
+            .sidebar { position: static; height: auto; padding: 14px 16px 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+            .summary { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 0 0 12px; }
+            nav { flex-direction: row; flex-wrap: wrap; }
+            .nav-group { display: none; }
+            nav a { padding: 6px 10px; }
+            .language { margin-top: 8px; padding: 0; }
+            main { padding: 20px 16px 40px; }
+        }
     </style>
 </head>
 <body>
-<main>
-    <header>
-        <div class="header-main">
-            <h1>KbmOverlay</h1>
+<div class="app">
+    <aside class="sidebar">
+        <div class="summary">
+            <div class="brand">KbmOverlay<span class="muted" id="version"></span></div>
             <span class="pill" id="status"><span class="dot"></span><span id="status-text" data-i18n="status.connecting"></span></span>
             <span class="pill ok" id="relay-pill" hidden><span class="dot"></span><span id="relay-pill-text"></span></span>
             <span class="muted last-input" id="last-input" data-i18n="input.hint"></span>
         </div>
+        <nav>
+            <div class="nav-group" data-i18n="nav.overlays"></div>
+            <a href="#keyboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6.5 10h1M10.5 10h1M14.5 10h1M8 14h8"/></svg>
+                <span data-i18n="keyboard.title"></span>
+            </a>
+            <a href="#mouse">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="3" width="11" height="18" rx="5.5"/><path d="M12 7v3"/></svg>
+                <span data-i18n="mouse.title"></span>
+            </a>
+            <a href="#mouse-move">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l4.5-4.5M13 7.5h3.5V11"/></svg>
+                <span data-i18n="mouseMove.title"></span>
+            </a>
+            <div class="nav-group" data-i18n="nav.more"></div>
+            <a href="#relay">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="4.5" width="8" height="6.5" rx="1"/><rect x="13.5" y="4.5" width="8" height="6.5" rx="1"/><path d="M6.5 11v3.5h11V11M12 14.5V19M9 19h6"/></svg>
+                <span data-i18n="relay.title"></span>
+                <span class="badge" id="relay-badge" data-i18n-title="nav.attention" hidden></span>
+            </a>
+            <a href="#custom">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4l2 2h9A1.5 1.5 0 0 1 21 9.5v8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z"/></svg>
+                <span data-i18n="custom.title"></span>
+            </a>
+            <a href="#about">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+                <span data-i18n="about.title"></span>
+            </a>
+        </nav>
         <label class="language" data-i18n-title="language.label">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
                 <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>
             </svg>
             <select id="language" data-i18n-aria="language.label"></select>
         </label>
-    </header>
+    </aside>
 
-    <div class="banner" id="approval" hidden>
-        <p id="approval-text"></p>
-        <p><span data-i18n="approval.code"></span> <span class="code" id="approval-code"></span></p>
-        <p class="muted" data-i18n="approval.hint"></p>
-        <div class="row">
-            <button type="button" id="approve" data-i18n="approval.allow"></button>
-            <button type="button" class="secondary" id="deny" data-i18n="approval.deny"></button>
+    <main>
+        <!-- Shown above every panel, so a request is never missed. -->
+        <div class="banner" id="approval" hidden>
+            <p id="approval-text"></p>
+            <p><span data-i18n="approval.code"></span> <span class="code" id="approval-code"></span></p>
+            <p class="muted" data-i18n="approval.hint"></p>
+            <div class="row">
+                <button type="button" id="approve" data-i18n="approval.allow"></button>
+                <button type="button" class="secondary" id="deny" data-i18n="approval.deny"></button>
+            </div>
         </div>
-    </div>
 
-    <div class="banner" id="waiting" hidden>
-        <p id="waiting-text"></p>
-        <p><span data-i18n="approval.code"></span> <span class="code" id="waiting-code"></span></p>
-        <p class="muted" data-i18n="waiting.hint"></p>
-    </div>
+        <div class="banner" id="waiting" hidden>
+            <p id="waiting-text"></p>
+            <p><span data-i18n="approval.code"></span> <span class="code" id="waiting-code"></span></p>
+            <p class="muted" data-i18n="waiting.hint"></p>
+        </div>
 
-    <div class="notice" id="admin-notice" data-i18n="admin.notice" hidden></div>
+        <div class="notice" id="admin-notice" data-i18n="admin.notice" hidden></div>
 
-    <section class="card">
-        <h2 data-i18n="obs.title"></h2>
+        <section class="panel" data-panel="keyboard" data-page="keyboard.html" data-colors="pressed released glow line" hidden>
+            <h2 data-i18n="keyboard.title"></h2>
+            <div class="preview"><iframe data-i18n-title="preview.keyboard"></iframe></div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="keyboard.layout"></span>
+                        <select data-param="layout">
+                            <option value="" data-i18n="layout.wasd"></option>
+                            <option value="tkl" data-i18n="layout.tkl"></option>
+                            <option value="full" data-i18n="layout.full"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="option.scale"></span>
+                        <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
+                    </label>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="mouse" data-page="mouse.html" data-colors="pressed released line" hidden>
+            <h2 data-i18n="mouse.title"></h2>
+            <div class="preview"><iframe data-i18n-title="preview.mouse"></iframe></div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="option.scale"></span>
+                        <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
+                    </label>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="mouse-move" data-page="mouse-move.html" data-colors="line" hidden>
+            <h2 data-i18n="mouseMove.title"></h2>
+            <div class="preview"><iframe data-i18n-title="preview.mouseMove"></iframe></div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="option.size"></span>
+                        <input type="number" data-param="size" min="120" max="2000" step="20" placeholder="400">
+                    </label>
+                    <label class="field"><span data-i18n="option.sens"></span>
+                        <input type="number" data-param="sens" min="0.05" max="20" step="0.25" placeholder="1">
+                    </label>
+                    <p class="muted small" data-i18n="mouseMove.hint"></p>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="relay" hidden>
+            <h2 data-i18n="relay.title"></h2>
+            <p class="muted intro">
+                <span data-i18n-html="relay.intro"></span>
+                <b id="relay-machine">…</b> <span id="relay-addresses"></span>
+            </p>
+            <div class="columns two">
+                <div class="box">
+                    <h3 data-i18n-html="receive.title"></h3>
+                    <div class="switch-row">
+                        <div>
+                            <div class="switch-title" id="receive-label" data-i18n="receive.switch"></div>
+                            <p id="receive-text" class="muted">…</p>
+                        </div>
+                        <label class="switch"><input type="checkbox" role="switch" id="receive-switch" aria-labelledby="receive-label"><span></span></label>
+                    </div>
+                    <div class="row" id="firewall-row" hidden>
+                        <button type="button" id="firewall-retry" data-i18n="receive.allowFirewall"></button>
+                    </div>
+                    <div class="switch-row sub" id="public-row" hidden>
+                        <div>
+                            <div class="switch-title" id="public-label" data-i18n="receive.allowPublic"></div>
+                            <p id="public-text" class="muted"></p>
+                        </div>
+                        <label class="switch"><input type="checkbox" role="switch" id="public-switch" aria-labelledby="public-label"><span></span></label>
+                    </div>
+                    <div class="row" id="network-row" hidden>
+                        <button type="button" class="secondary" id="network-settings" data-i18n="receive.networkSettings"></button>
+                    </div>
+                    <ul class="peer-list" id="paired-list"></ul>
+                </div>
+                <div class="box">
+                    <h3 data-i18n="send.title"></h3>
+                    <p id="send-text" class="muted">…</p>
+                    <ul class="peer-list" id="found-list"></ul>
+                    <div class="row">
+                        <input id="manual-address" data-i18n-placeholder="send.manualPlaceholder" data-i18n-aria="send.manualLabel">
+                        <button type="button" class="secondary" id="manual-connect" data-i18n="send.manualConnect"></button>
+                    </div>
+                    <p class="bad small" id="manual-error" style="margin-top:6px" hidden></p>
+                    <div class="row">
+                        <button type="button" class="secondary" id="search" data-i18n="send.search"></button>
+                        <button type="button" class="danger" id="stop-sending" data-i18n="send.stop" hidden></button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="custom" hidden>
+            <h2 data-i18n="custom.title"></h2>
+            <div class="box prose">
+                <p data-i18n="custom.colorsHint"></p>
+                <p data-i18n-html="custom.text"></p>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="about" hidden>
+            <h2 data-i18n="about.title"></h2>
+            <div class="box prose">
+                <p id="about-version" hidden></p>
+                <p data-i18n="footer.privacy"></p>
+                <p>
+                    <a href="licenses.html" data-i18n="footer.licenses"></a> ·
+                    <a href="https://github.com/xyzw0128-debug/KbmOverlay" target="_blank" rel="noopener">GitHub</a>
+                </p>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- The "Add to OBS" box, copied into each overlay panel. -->
+<template id="obs-box">
+    <input class="url" readonly data-i18n-aria="obs.urlLabel">
+    <button type="button" class="copy" data-i18n="copy"></button>
+    <p class="warn small changed" data-i18n="obs.changed" hidden></p>
+    <div class="size muted"></div>
+    <details class="howto">
+        <summary data-i18n="obs.title"></summary>
         <ol class="steps">
             <li data-i18n-html="obs.step1"></li>
             <li data-i18n-html="obs.step2"></li>
             <li data-i18n-html="obs.step3"></li>
         </ol>
-        <p class="muted" style="margin:10px 0 0" data-i18n="obs.reconnect"></p>
-    </section>
+        <p class="muted" data-i18n="obs.reconnect"></p>
+    </details>
+</template>
 
-    <section class="card" id="relay">
-        <h2 data-i18n="relay.title"></h2>
-        <p class="muted" style="margin:0 0 12px">
-            <span data-i18n-html="relay.intro"></span>
-            <b id="relay-machine">…</b> <span id="relay-addresses"></span>
-        </p>
-        <div class="relay-grid">
-            <div class="relay-box">
-                <h3 data-i18n-html="receive.title"></h3>
-                <p id="receive-text" class="muted">…</p>
-                <div class="row">
-                    <button type="button" id="receive-toggle" data-i18n="receive.turnOn"></button>
-                    <button type="button" id="allow-public" data-i18n="receive.allowPublic" hidden></button>
-                    <button type="button" class="secondary" id="network-settings" data-i18n="receive.networkSettings" hidden></button>
-                </div>
-                <div class="row" id="public-note" hidden>
-                    <span class="muted" data-i18n="receive.publicNote"></span>
-                    <button type="button" class="secondary" id="disallow-public" data-i18n="receive.disallowPublic"></button>
-                </div>
-                <ul class="peer-list" id="paired-list"></ul>
-            </div>
-            <div class="relay-box">
-                <h3 data-i18n="send.title"></h3>
-                <p id="send-text" class="muted">…</p>
-                <ul class="peer-list" id="found-list"></ul>
-                <div class="row">
-                    <input id="manual-address" data-i18n-placeholder="send.manualPlaceholder" data-i18n-aria="send.manualLabel">
-                    <button type="button" class="secondary" id="manual-connect" data-i18n="send.manualConnect"></button>
-                </div>
-                <p class="bad" id="manual-error" style="margin-top:6px" hidden></p>
-                <div class="row">
-                    <button type="button" class="secondary" id="search" data-i18n="send.search"></button>
-                    <button type="button" class="danger" id="stop-sending" data-i18n="send.stop" hidden></button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="card" data-page="keyboard.html">
-        <h2 data-i18n="keyboard.title"></h2>
-        <div class="options">
-            <label><span data-i18n="keyboard.layout"></span>
-                <select data-param="layout">
-                    <option value="" data-i18n="layout.wasd"></option>
-                    <option value="tkl" data-i18n="layout.tkl"></option>
-                    <option value="full" data-i18n="layout.full"></option>
-                </select>
-            </label>
-            <label><span data-i18n="option.scale"></span> <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1"></label>
-        </div>
-        <div class="preview"><iframe data-i18n-title="preview.keyboard"></iframe></div>
-        <div class="url-row"><input readonly data-i18n-aria="obs.urlLabel"><button type="button" data-i18n="copy"></button></div>
-        <div class="size muted"></div>
-    </section>
-
-    <section class="card" data-page="mouse.html">
-        <h2 data-i18n="mouse.title"></h2>
-        <div class="options">
-            <label><span data-i18n="option.scale"></span> <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1"></label>
-        </div>
-        <div class="preview"><iframe data-i18n-title="preview.mouse"></iframe></div>
-        <div class="url-row"><input readonly data-i18n-aria="obs.urlLabel"><button type="button" data-i18n="copy"></button></div>
-        <div class="size muted"></div>
-    </section>
-
-    <section class="card" data-page="mouse-move.html">
-        <h2 data-i18n="mouseMove.title"></h2>
-        <div class="options">
-            <label><span data-i18n="option.size"></span> <input type="number" data-param="size" min="120" max="2000" step="20" placeholder="400"></label>
-            <label><span data-i18n="option.sens"></span> <input type="number" data-param="sens" min="0.05" max="20" step="0.25" placeholder="1"></label>
-            <span class="muted" data-i18n="mouseMove.hint"></span>
-        </div>
-        <div class="preview"><iframe data-i18n-title="preview.mouseMove"></iframe></div>
-        <div class="url-row"><input readonly data-i18n-aria="obs.urlLabel"><button type="button" data-i18n="copy"></button></div>
-        <div class="size muted"></div>
-    </section>
-
-    <section class="card">
-        <h2 data-i18n="custom.title"></h2>
-        <p style="margin:0" data-i18n-html="custom.text"></p>
-    </section>
-
-    <footer class="muted">
-        <span data-i18n="footer.privacy"></span><br>
-        <a href="licenses.html" data-i18n="footer.licenses"></a> ·
-        <a href="https://github.com/xyzw0128-debug/KbmOverlay" target="_blank" rel="noopener">GitHub</a>
-    </footer>
-</main>
 <script>
     Overlay.i18n().then(function (t) {
         'use strict';
 
+        function $(id) { return document.getElementById(id); }
+
+        function el(tag, className, text) {
+            var element = document.createElement(tag);
+            if (className) element.className = className;
+            if (text != null) element.textContent = text;
+            return element;
+        }
+
         var info = t.info;
         Overlay.translate(t, document);
         document.title = info.version ? t('page.titleVersion', { version: info.version }) : t('page.title');
-        document.getElementById('admin-notice').hidden = info.elevated !== false;
+        $('admin-notice').hidden = info.elevated !== false;
+        if (info.version) {
+            $('version').textContent = info.version;
+            $('about-version').textContent = t('about.version', { version: info.version });
+            $('about-version').hidden = false;
+        }
+
+        // ---- choices remembered in this browser (panel, options, colors, last copied URLs) ----
+
+        var store = (function () {
+            var KEY = 'kbmoverlay.settings';
+            var data = {};
+            try {
+                var saved = JSON.parse(localStorage.getItem(KEY));
+                if (saved && typeof saved === 'object') data = saved;
+            } catch (e) {
+                // Storage off or broken: start from the defaults.
+            }
+            return {
+                get: function (name) { return data[name] != null ? data[name] : null; },
+                // An object saved under name, or a new empty one.
+                object: function (name) {
+                    var value = data[name];
+                    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+                },
+                set: function (name, value) {
+                    data[name] = value;
+                    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* not remembered, still works */ }
+                }
+            };
+        })();
 
         // ---- language ----
 
-        var languageSelect = document.getElementById('language');
+        var languageSelect = $('language');
         function addOption(value, label) {
             var option = document.createElement('option');
             option.value = value;
@@ -231,17 +404,205 @@
         (info.languages || []).forEach(function (language) { addOption(language.code, language.name); });
         languageSelect.value = info.langSetting || 'auto';
 
-        // ---- overlay cards ----
+        // ---- colors ----
+        // Colors go into the overlay URLs (?pressed=2DA026&...), the same for every overlay.
+        // A color that is not set uses theme.css.
+
+        var COLOR_NAMES = ['pressed', 'released', 'glow', 'line'];
+        var defaults = { pressed: '2DA026', released: '96CF13', glow: '23ADFF', line: 'FFFFFF' }; // until theme.css is read
+        var PRESETS = [
+            { name: 'green' }, // theme.css colors
+            { name: 'blue', pressed: '1F6FEB', released: '58A6FF', glow: '9ED0FF' },
+            { name: 'red', pressed: 'D63B3B', released: 'FF7B5C', glow: 'FFB347' },
+            { name: 'purple', pressed: '7C4DFF', released: 'B39DFF', glow: 'FF6EC7' },
+            { name: 'orange', pressed: 'E67E22', released: 'FFB65C', glow: 'FFE08A' },
+            { name: 'pink', pressed: 'E0559A', released: 'FF9CCB', glow: 'B39DFF' }
+        ];
+
+        function isHex(value) { return typeof value === 'string' && /^[0-9A-Fa-f]{6}$/.test(value); }
+
+        var colors = {};
+        var savedColors = store.object('colors');
+        COLOR_NAMES.forEach(function (name) {
+            if (isHex(savedColors[name])) colors[name] = savedColors[name].toUpperCase();
+        });
+
+        function colorOf(name) { return colors[name] || defaults[name]; }
+
+        // changes: { name: 'RRGGBB' or null for the theme.css color }
+        function setColors(changes) {
+            Object.keys(changes).forEach(function (name) {
+                var value = changes[name] ? changes[name].toUpperCase() : null;
+                if (!value || value === defaults[name]) delete colors[name];
+                else colors[name] = value;
+            });
+            store.set('colors', colors);
+            refreshCards();
+        }
+
+        // Any CSS color -> 'RRGGBB', or null.
+        function cssToHex(value) {
+            if (/var\(/.test(value)) return null;
+            var probe = document.createElement('span');
+            probe.style.color = value;
+            if (!probe.style.color) return null;
+            document.body.appendChild(probe);
+            var rgb = getComputedStyle(probe).color.match(/[\d.]+/g);
+            document.body.removeChild(probe);
+            if (!rgb || rgb.length < 3) return null;
+            return rgb.slice(0, 3).map(function (n) {
+                return ('0' + Math.round(+n).toString(16)).slice(-2);
+            }).join('').toUpperCase();
+        }
+
+        // Show the colors theme.css really has; it can be edited in the pages folder.
+        fetch('theme.css')
+            .then(function (response) { return response.ok ? response.text() : ''; })
+            .then(function (css) {
+                var root = /:root\s*\{([^}]*)\}/.exec(css);
+                if (!root) return;
+                COLOR_NAMES.forEach(function (name) {
+                    var match = new RegExp('--' + name + '\\s*:\\s*([^;]+);').exec(root[1]);
+                    var hex = match && cssToHex(match[1].trim());
+                    if (hex) defaults[name] = hex;
+                });
+                refreshCards();
+            })
+            .catch(function () { /* keep the built-in defaults */ });
+
+        // Fills the Colors box of one panel: preset swatches (when the overlay has a pressed color)
+        // and a picker plus a hex field per color. Returns a function that redraws it.
+        function colorBox(box, names) {
+            var swatches = [];
+            if (names.indexOf('pressed') >= 0) {
+                var group = el('div', 'swatches');
+                group.setAttribute('role', 'group');
+                group.setAttribute('aria-label', t('color.presets'));
+                PRESETS.forEach(function (preset) {
+                    var button = el('button', 'swatch');
+                    button.type = 'button';
+                    button.title = t('color.preset.' + preset.name);
+                    button.setAttribute('aria-label', button.title);
+                    button.addEventListener('click', function () {
+                        setColors({ pressed: preset.pressed, released: preset.released, glow: preset.glow });
+                    });
+                    group.appendChild(button);
+                    swatches.push({ button: button, preset: preset });
+                });
+                box.appendChild(group);
+            }
+
+            var error = el('p', 'bad small', t('color.invalid'));
+            error.hidden = true;
+            var rows = names.map(function (name) {
+                var label = t('color.' + name);
+                var row = el('div', 'color-row');
+                var picker = el('input');
+                picker.type = 'color';
+                picker.setAttribute('aria-label', label);
+                var hex = el('input', 'hex');
+                hex.maxLength = 7;
+                hex.spellcheck = false;
+                hex.setAttribute('aria-label', label + ' (HEX)');
+
+                picker.addEventListener('input', function () { hex.value = picker.value.toUpperCase(); });
+                picker.addEventListener('change', function () {
+                    var change = {};
+                    change[name] = picker.value.slice(1);
+                    setColors(change);
+                });
+                hex.addEventListener('input', function () {
+                    hex.classList.remove('invalid');
+                    error.hidden = true;
+                });
+                hex.addEventListener('change', function () {
+                    var value = hex.value.trim().replace(/^#/, '');
+                    if (/^[0-9A-Fa-f]{3}$/.test(value)) value = value.replace(/./g, '$&$&');
+                    if (!isHex(value)) {
+                        hex.classList.add('invalid');
+                        error.hidden = false;
+                        return;
+                    }
+                    var change = {};
+                    change[name] = value;
+                    setColors(change);
+                });
+
+                row.appendChild(el('span', null, label));
+                row.appendChild(picker);
+                row.appendChild(hex);
+                box.appendChild(row);
+                return { name: name, picker: picker, hex: hex };
+            });
+            box.appendChild(error);
+
+            var footer = el('div', 'color-footer');
+            var reset = el('button', 'link', t('color.reset'));
+            reset.type = 'button';
+            reset.addEventListener('click', function () {
+                var change = {};
+                names.forEach(function (name) { change[name] = null; });
+                setColors(change);
+            });
+            footer.appendChild(el('span', 'muted', t('color.shared')));
+            footer.appendChild(reset);
+            box.appendChild(footer);
+
+            return function render() {
+                rows.forEach(function (row) {
+                    var value = colorOf(row.name);
+                    row.picker.value = '#' + value.toLowerCase();
+                    if (!row.hex.classList.contains('invalid')) row.hex.value = '#' + value;
+                });
+                swatches.forEach(function (swatch) {
+                    var preset = swatch.preset;
+                    var current = ['pressed', 'released', 'glow'].every(function (name) {
+                        return (colors[name] || null) === (preset[name] || null);
+                    });
+                    swatch.button.style.background = '#' + (preset.pressed || defaults.pressed);
+                    swatch.button.setAttribute('aria-pressed', current ? 'true' : 'false');
+                });
+                reset.hidden = !names.some(function (name) { return colors[name]; });
+            };
+        }
+
+        // ---- overlay panels ----
+
+        var PREVIEW_PAD = 16;         // px around the overlay inside the preview
+        var PREVIEW_MAX_HEIGHT = 320; // px; taller overlays are shown smaller
+
+        var cards = [];
+        var savedOptions = store.object('options');
+        var copied = store.object('copied');   // page -> URL last copied, to notice later changes
+
+        function refreshCards() {
+            cards.forEach(function (card) { card.refresh(); });
+        }
 
         function setupCard(card) {
             var page = card.getAttribute('data-page');
+            var colorNames = (card.getAttribute('data-colors') || '').split(' ').filter(Boolean);
             var iframe = card.querySelector('iframe');
             var preview = card.querySelector('.preview');
-            var urlInput = card.querySelector('.url-row input');
-            var copyButton = card.querySelector('.url-row button');
-            var sizeText = card.querySelector('.size');
+            var obsBox = card.querySelector('.obs');
+            obsBox.appendChild(document.importNode($('obs-box').content, true));
+            Overlay.translate(t, obsBox);
+            var urlInput = obsBox.querySelector('.url');
+            var copyButton = obsBox.querySelector('.copy');
+            var changedNote = obsBox.querySelector('.changed');
+            var sizeText = obsBox.querySelector('.size');
+            obsBox.querySelector('.howto').open = !Object.keys(copied).length; // open until something was copied once
             var controls = Array.prototype.slice.call(card.querySelectorAll('[data-param]'));
+            var renderColors = colorBox(card.querySelector('.colors'), colorNames);
             var size = null;
+
+            var options = savedOptions[page] || {};
+            controls.forEach(function (control) {
+                var value = options[control.getAttribute('data-param')];
+                if (typeof value !== 'string') return;
+                control.value = value;
+                if (control.tagName === 'SELECT' && control.selectedIndex < 0) control.selectedIndex = 0;
+            });
 
             function url() {
                 var parts = [];
@@ -249,43 +610,61 @@
                     var value = control.value.trim();
                     if (value !== '') parts.push(control.getAttribute('data-param') + '=' + encodeURIComponent(value));
                 });
+                colorNames.forEach(function (name) {
+                    if (colors[name]) parts.push(name + '=' + colors[name]);
+                });
                 return location.origin + '/' + page + (parts.length ? '?' + parts.join('&') : '');
             }
 
+            // Centers the overlay in the preview, shrunk to fit when it is too big.
             function fit() {
-                if (!size) return;
-                var scale = Math.min(1, preview.clientWidth / size[0]);
+                var width = preview.clientWidth;
+                if (!size || !width) return; // not measured yet, or the panel is hidden
+                var scale = Math.min(1, (width - PREVIEW_PAD * 2) / size[0], PREVIEW_MAX_HEIGHT / size[1]);
+                var height = Math.max(140, Math.ceil(size[1] * scale) + PREVIEW_PAD * 2);
+                var left = Math.round((width - size[0] * scale) / 2);
+                var top = Math.round((height - size[1] * scale) / 2);
                 iframe.style.width = size[0] + 'px';
                 iframe.style.height = size[1] + 'px';
-                iframe.style.transform = 'scale(' + scale + ')';
-                preview.style.height = Math.ceil(size[1] * scale) + 'px';
+                iframe.style.transform = 'translate(' + left + 'px, ' + top + 'px) scale(' + scale + ')';
+                preview.style.height = height + 'px';
             }
 
             function update() {
                 var value = url();
                 urlInput.value = value;
-                sizeText.textContent = t('size.measuring');
-                iframe.src = value;
+                changedNote.hidden = !copied[page] || copied[page] === value;
+                if (iframe.getAttribute('src') !== value) {
+                    sizeText.textContent = t('size.measuring');
+                    iframe.src = value;
+                }
             }
 
-            controls.forEach(function (control) { control.addEventListener('change', update); });
+            controls.forEach(function (control) {
+                control.addEventListener('change', function () {
+                    var values = {};
+                    controls.forEach(function (c) { values[c.getAttribute('data-param')] = c.value.trim(); });
+                    savedOptions[page] = values;
+                    store.set('options', savedOptions);
+                    update();
+                });
+            });
 
             copyButton.addEventListener('click', function () {
                 function done() {
+                    copied[page] = urlInput.value;
+                    store.set('copied', copied);
+                    changedNote.hidden = true;
                     copyButton.textContent = t('copied');
                     setTimeout(function () { copyButton.textContent = t('copy'); }, 1500);
                 }
-                if (navigator.clipboard) {
-                    navigator.clipboard.writeText(urlInput.value).then(done, function () {
-                        urlInput.select();
-                        document.execCommand('copy');
-                        done();
-                    });
-                } else {
+                function fallback() {
                     urlInput.select();
                     document.execCommand('copy');
                     done();
                 }
+                if (navigator.clipboard) navigator.clipboard.writeText(urlInput.value).then(done, fallback);
+                else fallback();
             });
 
             window.addEventListener('message', function (event) {
@@ -297,14 +676,44 @@
             });
             window.addEventListener('resize', fit);
 
+            cards.push({
+                fit: fit,
+                refresh: function () {
+                    renderColors();
+                    update();
+                }
+            });
+            renderColors();
             update();
         }
 
         Array.prototype.forEach.call(document.querySelectorAll('[data-page]'), setupCard);
 
-        // ---- connection ----
+        // ---- menu ----
+        // The address ends in #keyboard, #relay, ... No element has those ids, so the page does not jump.
 
-        function $(id) { return document.getElementById(id); }
+        var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
+        var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+
+        function showPanel(name) {
+            var known = panels.some(function (panel) { return panel.getAttribute('data-panel') === name; });
+            if (!known) name = 'keyboard';
+            panels.forEach(function (panel) { panel.hidden = panel.getAttribute('data-panel') !== name; });
+            links.forEach(function (link) {
+                if (link.getAttribute('href') === '#' + name) link.setAttribute('aria-current', 'page');
+                else link.removeAttribute('aria-current');
+            });
+            store.set('panel', name);
+            cards.forEach(function (card) { card.fit(); });
+        }
+
+        window.addEventListener('hashchange', function () {
+            showPanel(location.hash.slice(1));
+            window.scrollTo(0, 0);
+        });
+        showPanel(location.hash.slice(1) || store.get('panel'));
+
+        // ---- connection ----
 
         var status = $('status');
         var connection = Overlay.connect(['key', 'button', 'relay'])
@@ -332,9 +741,9 @@
 
         // ---- two PCs ----
 
-        function setText(el, text, tone) {
-            el.textContent = text;
-            el.className = tone || 'muted';
+        function setText(element, text, tone) {
+            element.textContent = text;
+            element.className = tone || 'muted';
         }
 
         function peerItem(label, buttonText, buttonClass, onClick) {
@@ -379,7 +788,11 @@
                 $('waiting-code').textContent = send.code;
             }
 
-            // Header pill.
+            var attention = (pending ? 1 : 0) + (waiting ? 1 : 0);
+            $('relay-badge').hidden = !attention;
+            $('relay-badge').textContent = attention;
+
+            // Pill in the menu.
             var pillText = '';
             if (receive && receive.active) pillText = t('pill.showing', { name: receive.active.name });
             else if (send && send.state === 'sending') pillText = t('pill.sending', { name: send.target });
@@ -392,20 +805,25 @@
 
         function renderReceive(receive) {
             var text = $('receive-text');
-            var toggle = $('receive-toggle');
+            var receiveSwitch = $('receive-switch');
+            var publicSwitch = $('public-switch');
             var onPublic = !!(receive && receive.on && receive.problem === 'public-network');
-            $('network-settings').hidden = !onPublic;
-            $('allow-public').hidden = !onPublic;
-            $('public-note').hidden = !(receive && receive.on && receive.allowPublic);
-            toggle.disabled = !receive;
+            var firewallProblem = !!(receive && (receive.problem === 'firewall-needed' || receive.problem === 'firewall-failed'));
+
+            // The switches always show what KbmOverlay reports, not what was just clicked.
+            receiveSwitch.parentNode.classList.remove('busy');
+            publicSwitch.parentNode.classList.remove('busy');
+            receiveSwitch.disabled = publicSwitch.disabled = !receive;
+            receiveSwitch.checked = !!(receive && receive.on);
+            publicSwitch.checked = !!(receive && receive.allowPublic);
+            $('firewall-row').hidden = !(receive && receive.on && firewallProblem);
+            $('public-row').hidden = !(receive && receive.on && (onPublic || receive.allowPublic));
+            $('network-row').hidden = !onPublic;
             if (!receive) {
                 setText(text, t('receive.notConnected'));
                 return;
             }
-
-            var firewallProblem = receive.problem === 'firewall-needed' || receive.problem === 'firewall-failed';
-            toggle.textContent = t(!receive.on ? 'receive.turnOn' : firewallProblem ? 'receive.allowFirewall' : 'receive.turnOff');
-            toggle.className = receive.on && !firewallProblem ? 'secondary' : '';
+            $('public-text').textContent = t('receive.publicSwitchText', { port: receive.port });
 
             if (!receive.on) setText(text, t('receive.offText'));
             else if (receive.problem === 'public-network') setText(text, t('receive.publicText', { port: receive.port }), 'warn');
@@ -457,15 +875,20 @@
             });
         }
 
-        $('receive-toggle').addEventListener('click', function () {
-            var receive = lastRelay && lastRelay.receive;
-            if (!receive) return;
-            var firewallProblem = receive.problem === 'firewall-needed' || receive.problem === 'firewall-failed';
-            connection.send({ cmd: 'receive', on: !receive.on || firewallProblem });
-        });
+        // A switch sends its command and stays dimmed until KbmOverlay reports the new state
+        // (right away; the firewall prompt comes after). If no report comes, it goes back.
+        function onSwitch(input, command) {
+            input.addEventListener('change', function () {
+                input.parentNode.classList.add('busy');
+                connection.send(command(input.checked));
+                setTimeout(function () { renderRelay(lastRelay); }, 3000);
+            });
+        }
+        onSwitch($('receive-switch'), function (on) { return { cmd: 'receive', on: on }; });
+        onSwitch($('public-switch'), function (on) { return { cmd: 'allowPublic', on: on }; });
+
+        $('firewall-retry').addEventListener('click', function () { connection.send({ cmd: 'receive', on: true }); });
         $('network-settings').addEventListener('click', function () { connection.send({ cmd: 'networkSettings' }); });
-        $('allow-public').addEventListener('click', function () { connection.send({ cmd: 'allowPublic', on: true }); });
-        $('disallow-public').addEventListener('click', function () { connection.send({ cmd: 'allowPublic', on: false }); });
         $('approve').addEventListener('click', function () { connection.send({ cmd: 'approve', id: lastRelay.receive.pending.id }); });
         $('deny').addEventListener('click', function () { connection.send({ cmd: 'deny', id: lastRelay.receive.pending.id }); });
         $('search').addEventListener('click', function () { connection.send({ cmd: 'search' }); });

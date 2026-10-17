@@ -2,6 +2,8 @@
  * Colors and animations for all overlays. Change them here, or copy a rule into one page.
  * Key look (white outline, green press with blue glow, green fade on release) and the mouse
  * colors come from Zergatul.Obs.InputOverlay (MIT, see THIRD-PARTY-NOTICES.txt).
+ * An overlay URL can also set colors (?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF);
+ * those win over the ones here. The color boxes on the settings page build them.
  */
 :root {
     --line: #ffffff;            /* key outline and text */
