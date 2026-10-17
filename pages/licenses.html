@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KbmOverlay 라이선스와 출처</title>
+    <style>
+        :root {
+            --bg: #16171a;
+            --card: #1f2126;
+            --line: #33363d;
+            --text: #e8e9ec;
+            --muted: #9a9ea8;
+            --font: "Segoe UI", "Malgun Gothic", sans-serif;
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); }
+        main { max-width: 860px; margin: 0 auto; padding: 28px 16px 48px; }
+        h1 { font-size: 22px; margin: 0 0 6px; }
+        h2 { font-size: 17px; margin: 0 0 10px; }
+        a { color: #8ab4f8; }
+        .muted { color: var(--muted); }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-top: 16px; }
+        pre { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 13px/1.5 Consolas, monospace; color: var(--text); }
+    </style>
+</head>
+<body>
+<main>
+    <h1>라이선스와 출처</h1>
+    <p class="muted" style="margin:0">
+        KbmOverlay는 MIT 라이선스로 배포되는 개인 프로젝트예요. OBS Studio(OBS Project)나 Zergatul Input Overlay의 공식 프로그램이 아니에요.
+        <a href="/">설정 페이지로 돌아가기</a>
+    </p>
+
+    <section class="card">
+        <h2>KbmOverlay</h2>
+        <pre id="license">불러오는 중…</pre>
+    </section>
+
+    <section class="card">
+        <h2>함께 쓰인 다른 프로젝트</h2>
+        <pre id="notices">불러오는 중…</pre>
+    </section>
+</main>
+<script>
+    // Both texts are built into the exe (see KbmOverlay.csproj).
+    [['license', 'licenses/LICENSE.txt'], ['notices', 'licenses/THIRD-PARTY-NOTICES.txt']].forEach(function (pair) {
+        fetch(pair[1])
+            .then(function (response) { return response.ok ? response.text() : Promise.reject(new Error(pair[1])); })
+            .then(function (text) { document.getElementById(pair[0]).textContent = text; })
+            .catch(function () { document.getElementById(pair[0]).textContent = '파일을 불러오지 못했어요: ' + pair[1]; });
+    });
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>KbmOverlay</AssemblyName>
     <RootNamespace>KbmOverlay</RootNamespace>
-    <Version>0.3.0</Version>
+    <Version>0.3.1</Version>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <DebugType>none</DebugType>
@@ -27,6 +27,9 @@
   <ItemGroup>
     <!-- Overlay pages are embedded so the exe is a single file. A "pages" folder next to the exe overrides them. -->
     <EmbeddedResource Include="pages\**\*" LogicalName="pages/%(RecursiveDir)%(Filename)%(Extension)" />
+    <!-- License texts travel inside the exe and are shown at http://localhost:5520/licenses.html. -->
+    <EmbeddedResource Include="LICENSE" LogicalName="pages/licenses/LICENSE.txt" />
+    <EmbeddedResource Include="THIRD-PARTY-NOTICES.txt" LogicalName="pages/licenses/THIRD-PARTY-NOTICES.txt" />
   </ItemGroup>
 
 </Project>
