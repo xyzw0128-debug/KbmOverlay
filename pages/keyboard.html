@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Keyboard</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="overlay.js"></script>
+</head>
+<body>
+    <div class="board" id="board"></div>
+    <script>
+        // keyboard.html?layout=wasd|tkl|full (a file in layouts/)&scale=1.5
+        //
+        // Layout files list rows of keys, like keyboard-layout-editor:
+        //   { "rows": [ { "y": 0.25, "h": 1, "keys": [ "KeyQ", { "k": "Tab", "w": 1.5, "x": 0.5, "l": "Tab" } ] } ] }
+        // Sizes are in key units. A string is a key name with the default label.
+        // "x" / "y" move right / down by that much first. "w" / "h" are width and height,
+        // "l" the label and "f" the font size in px. Key names are listed in README.md.
+        (function () {
+            'use strict';
+
+            var UNIT = 48;   // px from one key to the next
+            var GAP = 4;     // px between keys
+            var PAD = 12;    // px around the board, room for the glow
+
+            var LABELS = {
+                Esc: 'Esc', Tilde: '~', Minus: '-', Plus: '=', Backspace: 'Back',
+                Tab: 'Tab', LeftBracket: '[', RightBracket: ']', Backslash: '\\',
+                CapsLock: 'Caps', Semicolon: ';', Quote: "'", Enter: 'Enter',
+                LeftShift: 'Shift', RightShift: 'Shift', Comma: ',', Period: '.', Slash: '/', IntlBackslash: '\\',
+                LeftCtrl: 'Ctrl', RightCtrl: 'Ctrl', LeftWindows: 'Win', RightWindows: 'Win',
+                LeftAlt: 'Alt', RightAlt: 'Alt', App: 'Menu', Space: 'Space',
+                Hangul: '한/영', Hanja: '한자',
+                PrintScreen: 'PrtSc', ScrollLock: 'ScrLk', Pause: 'Pause',
+                Insert: 'Ins', Home: 'Home', PageUp: 'PgUp', Delete: 'Del', End: 'End', PageDown: 'PgDn',
+                Left: '←', Up: '↑', Right: '→', Down: '↓',
+                NumLock: 'Num', NumSlash: '/', NumAsterisk: '*', NumMinus: '-', NumPlus: '+',
+                NumPeriod: '.', NumEnter: 'Enter'
+            };
+
+            function defaultLabel(name) {
+                if (LABELS.hasOwnProperty(name)) return LABELS[name];
+                if (/^Key[A-Z0-9]$/.test(name)) return name.slice(3);
+                if (/^Num[0-9]$/.test(name)) return name.slice(3);
+                return name;
+            }
+
+            // Turns rows into keys with x, y, w, h in units.
+            function expand(layout) {
+                var keys = [];
+                var y = 0;
+                (layout.rows || []).forEach(function (row) {
+                    y += row.y || 0;
+                    var x = 0;
+                    var rowHeight = row.h || 1;
+                    (row.keys || []).forEach(function (item) {
+                        if (typeof item === 'string') item = { k: item };
+                        x += item.x || 0;
+                        var w = item.w || 1;
+                        keys.push({
+                            name: item.k,
+                            label: item.l != null ? item.l : defaultLabel(item.k),
+                            font: item.f,
+                            x: x,
+                            y: y + (item.y || 0),
+                            w: w,
+                            h: item.h || rowHeight
+                        });
+                        x += w;
+                    });
+                    y += rowHeight;
+                });
+                return keys;
+            }
+
+            function fitFont(label, width, height) {
+                var size = Math.min(20, height * 0.55);
+                var estimated = label.length * size * 0.55;   // rough Calibri glyph width
+                if (estimated > width - 10) size = Math.max(10, (width - 10) / (label.length * 0.55));
+                return Math.floor(size);
+            }
+
+            function build(layout) {
+                var board = document.getElementById('board');
+                var elements = {};
+                var right = 0, bottom = 0;
+
+                expand(layout).forEach(function (key) {
+                    var width = key.w * UNIT - GAP;
+                    var height = key.h * UNIT - GAP;
+                    var el = document.createElement('div');
+                    el.className = 'key';
+                    el.style.left = (PAD + key.x * UNIT) + 'px';
+                    el.style.top = (PAD + key.y * UNIT) + 'px';
+                    el.style.width = width + 'px';
+                    el.style.height = height + 'px';
+                    el.style.fontSize = (key.font || fitFont(key.label, width, height)) + 'px';
+                    el.textContent = key.label;
+                    board.appendChild(el);
+                    (elements[key.name] = elements[key.name] || []).push(el);
+                    right = Math.max(right, key.x + key.w);
+                    bottom = Math.max(bottom, key.y + key.h);
+                });
+
+                var scale = Overlay.number('scale', 1, 0.25, 4);
+                var width = PAD * 2 + right * UNIT - GAP;
+                var height = PAD * 2 + bottom * UNIT - GAP;
+                board.style.width = width + 'px';
+                board.style.height = height + 'px';
+                board.style.transform = 'scale(' + scale + ')';
+                Overlay.reportSize(width * scale, height * scale);
+
+                Overlay.connect(['key']).on('key', function (name, down) {
+                    (elements[name] || []).forEach(function (el) {
+                        if (down) {
+                            el.classList.remove('released');
+                            el.classList.add('pressed');
+                        } else {
+                            el.classList.remove('pressed');
+                            void el.offsetWidth; // restart the fade when a key is tapped twice quickly
+                            el.classList.add('released');
+                        }
+                    });
+                });
+            }
+
+            var name = (Overlay.params.get('layout') || 'wasd').replace(/[^A-Za-z0-9_-]/g, '');
+            fetch('layouts/' + name + '.json')
+                .then(function (response) {
+                    if (!response.ok) throw new Error('layouts/' + name + '.json 파일이 없어요.');
+                    return response.json();
+                })
+                .then(build)
+                .catch(function (error) {
+                    Overlay.showError('키보드 레이아웃을 불러오지 못했어요\n' + error.message);
+                });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KbmOverlay 설정</title>
+    <script src="overlay.js"></script>
+    <style>
+        :root {
+            --bg: #16171a;
+            --card: #1f2126;
+            --line: #33363d;
+            --text: #e8e9ec;
+            --muted: #9a9ea8;
+            --accent: #2DA026;
+            --warn: #f2b84b;
+            --bad: #e5534b;
+            --font: "Segoe UI", "Malgun Gothic", sans-serif;
+        }
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+        html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); }
+        main { max-width: 980px; margin: 0 auto; padding: 28px 16px 48px; }
+        h1 { font-size: 22px; margin: 0; }
+        h2 { font-size: 17px; margin: 0 0 12px; }
+        .muted { color: var(--muted); }
+        header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 20px; }
+        .pill { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--card); border: 1px solid var(--line); font-size: 14px; }
+        .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--bad); }
+        .pill.ok .dot { background: var(--accent); }
+        .last-input { font-variant-numeric: tabular-nums; }
+        .notice { border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 16px; }
+        ol.steps { margin: 0; padding-left: 20px; }
+        ol.steps li { margin: 2px 0; }
+        .options { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-bottom: 12px; align-items: center; }
+        label { color: var(--muted); font-size: 14px; display: inline-flex; align-items: center; gap: 6px; }
+        select, input[type=number] { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; font: inherit; }
+        input[type=number] { width: 80px; }
+        .preview { position: relative; overflow: hidden; border-radius: 8px; margin-bottom: 12px; min-height: 60px;
+                   background: #0b0c0e repeating-conic-gradient(#14161a 0% 25%, #0b0c0e 0% 50%) 0 0 / 24px 24px; }
+        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; }
+        .url-row { display: flex; gap: 8px; flex-wrap: wrap; }
+        .url-row input { flex: 1 1 320px; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: 14px Consolas, monospace; }
+        button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font: inherit; cursor: pointer; }
+        button:active { transform: translateY(1px); }
+        .size { margin-top: 8px; font-size: 14px; }
+        .size b { font-variant-numeric: tabular-nums; }
+        code { font-family: Consolas, monospace; font-size: 13px; background: var(--bg); padding: 1px 5px; border-radius: 4px; }
+        button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
+        button.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
+        button:disabled { opacity: 0.5; cursor: default; }
+        h3 { font-size: 15px; margin: 0 0 8px; }
+        .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+        .row input { flex: 1 1 200px; min-width: 0; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; font: inherit; }
+        .relay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+        .relay-box { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+        .relay-box p { margin: 0; }
+        .peer-list { list-style: none; margin: 10px 0 0; padding: 0; }
+        .peer-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); }
+        .peer-list li:first-child { border-top: 0; }
+        .peer-list button { flex-shrink: 0; white-space: nowrap; }
+        .good { color: var(--accent); }
+        .warn { color: var(--warn); }
+        .bad { color: var(--bad); }
+        .banner { border: 2px solid var(--warn); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; background: var(--card); }
+        .banner .code { font: 600 28px/1.2 Consolas, monospace; letter-spacing: 2px; color: var(--warn); }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <h1>KbmOverlay</h1>
+        <span class="pill" id="status"><span class="dot"></span><span id="status-text">연결 중…</span></span>
+        <span class="pill ok" id="relay-pill" hidden><span class="dot"></span><span id="relay-pill-text"></span></span>
+        <span class="muted last-input" id="last-input">키보드나 마우스를 눌러 보세요</span>
+    </header>
+
+    <div class="banner" id="approval" hidden>
+        <p style="margin:0 0 6px"><b>게임 PC '<span id="approval-name"></span>'</b>(<span id="approval-address"></span>)가 이 PC로 키보드·마우스 입력을 보내려고 해요.</p>
+        <p style="margin:0">확인 숫자 <span class="code" id="approval-code"></span></p>
+        <p class="muted" style="margin:4px 0 0">게임 PC 화면에 나온 숫자와 같으면 허용하세요. 다르면 거절하세요.</p>
+        <div class="row"><button type="button" id="approve">허용</button><button type="button" class="secondary" id="deny">거절</button></div>
+    </div>
+
+    <div class="banner" id="waiting" hidden>
+        <p style="margin:0 0 6px">방송 PC <b>'<span id="waiting-name"></span>'</b> 화면에서 <b>허용</b>을 눌러 주세요.</p>
+        <p style="margin:0">확인 숫자 <span class="code" id="waiting-code"></span></p>
+        <p class="muted" style="margin:4px 0 0">방송 PC에 나온 숫자와 같아야 해요.</p>
+    </div>
+
+    <div class="notice" id="admin-notice" hidden>
+        관리자 권한이 아니에요. 관리자 권한으로 실행한 게임에서는 입력이 안 보일 수 있어요.
+        그럴 땐 KbmOverlay.exe를 우클릭 → "관리자 권한으로 실행"으로 다시 켜 주세요.
+    </div>
+
+    <section class="card">
+        <h2>OBS에 넣는 법</h2>
+        <ol class="steps">
+            <li>OBS의 소스 목록에서 <b>+</b> → <b>브라우저</b>를 고르고 이름을 정해요.</li>
+            <li>아래 주소를 <b>복사</b>해서 <b>URL</b> 칸에 붙여 넣어요. "로컬 파일"은 체크하지 않아요.</li>
+            <li><b>너비</b>와 <b>높이</b>를 아래 크기대로 넣고 확인을 눌러요.</li>
+        </ol>
+        <p class="muted" style="margin:10px 0 0">KbmOverlay를 껐다 켜도 OBS는 그대로 두면 돼요. 몇 초 안에 다시 연결돼요.</p>
+    </section>
+
+    <section class="card" id="relay">
+        <h2>투컴 (PC 두 대)</h2>
+        <p class="muted" style="margin:0 0 12px">
+            두 PC에서 모두 KbmOverlay를 실행해요. OBS 주소는 방송 PC에서도 위와 똑같이 <code>localhost</code>예요.
+            이 PC: <b id="relay-machine">…</b> <span id="relay-addresses"></span>
+        </p>
+        <div class="relay-grid">
+            <div class="relay-box">
+                <h3>이 PC가 방송 PC예요 <span class="muted">(OBS가 있는 PC)</span></h3>
+                <p id="receive-text" class="muted">…</p>
+                <div class="row">
+                    <button type="button" id="receive-toggle">게임 PC 입력 받기 켜기</button>
+                    <button type="button" class="secondary" id="network-settings" hidden>네트워크 설정 열기</button>
+                </div>
+                <ul class="peer-list" id="paired-list"></ul>
+            </div>
+            <div class="relay-box">
+                <h3>이 PC가 게임 PC예요</h3>
+                <p id="send-text" class="muted">…</p>
+                <ul class="peer-list" id="found-list"></ul>
+                <div class="row">
+                    <input id="manual-address" placeholder="찾지 못하면 방송 PC IP (예: 192.168.0.20)" aria-label="방송 PC IP">
+                    <button type="button" class="secondary" id="manual-connect">IP로 연결</button>
+                </div>
+                <p class="bad" id="manual-error" style="margin-top:6px" hidden></p>
+                <div class="row">
+                    <button type="button" class="secondary" id="search">다시 찾기</button>
+                    <button type="button" class="danger" id="stop-sending" hidden>보내기 끄기</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" data-page="keyboard.html">
+        <h2>키보드</h2>
+        <div class="options">
+            <label>배열
+                <select data-param="layout">
+                    <option value="">WASD</option>
+                    <option value="tkl">텐키리스</option>
+                    <option value="full">풀배열</option>
+                </select>
+            </label>
+            <label>크기 배율 <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1"></label>
+        </div>
+        <div class="preview"><iframe title="키보드 미리보기"></iframe></div>
+        <div class="url-row"><input readonly aria-label="OBS 주소"><button type="button">복사</button></div>
+        <div class="size muted"></div>
+    </section>
+
+    <section class="card" data-page="mouse.html">
+        <h2>마우스</h2>
+        <div class="options">
+            <label>크기 배율 <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1"></label>
+        </div>
+        <div class="preview"><iframe title="마우스 미리보기"></iframe></div>
+        <div class="url-row"><input readonly aria-label="OBS 주소"><button type="button">복사</button></div>
+        <div class="size muted"></div>
+    </section>
+
+    <section class="card" data-page="mouse-move.html">
+        <h2>마우스 이동</h2>
+        <div class="options">
+            <label>크기(px) <input type="number" data-param="size" min="120" max="2000" step="20" placeholder="400"></label>
+            <label>민감도 <input type="number" data-param="sens" min="0.05" max="20" step="0.25" placeholder="1"></label>
+            <span class="muted">마우스를 움직일 때만 보여요. 너무 흐리면 민감도를 올려요.</span>
+        </div>
+        <div class="preview"><iframe title="마우스 이동 미리보기"></iframe></div>
+        <div class="url-row"><input readonly aria-label="OBS 주소"><button type="button">복사</button></div>
+        <div class="size muted"></div>
+    </section>
+
+    <section class="card">
+        <h2>꾸미기</h2>
+        <p style="margin:0">
+            <code>KbmOverlay.exe --export-pages</code>로 실행하면 exe 옆에 <code>pages</code> 폴더가 생겨요.
+            그 안의 <code>theme.css</code>(색·애니메이션)와 <code>layouts/*.json</code>(키 배치)을 고치면
+            OBS에서 소스를 새로 고칠 때 바로 반영돼요. 새 배열은 <code>layouts/이름.json</code>으로 만들고
+            주소에 <code>?layout=이름</code>을 붙이면 돼요.
+        </p>
+    </section>
+</main>
+<script>
+    (function () {
+        'use strict';
+
+        var KEY_LABELS = { Mouse1: '왼쪽 버튼', Mouse2: '오른쪽 버튼', Mouse3: '휠 버튼', Mouse4: '앞으로 버튼', Mouse5: '뒤로 버튼' };
+
+        function setupCard(card) {
+            var page = card.getAttribute('data-page');
+            var iframe = card.querySelector('iframe');
+            var preview = card.querySelector('.preview');
+            var urlInput = card.querySelector('.url-row input');
+            var copyButton = card.querySelector('.url-row button');
+            var sizeText = card.querySelector('.size');
+            var controls = Array.prototype.slice.call(card.querySelectorAll('[data-param]'));
+            var size = null;
+
+            function url() {
+                var parts = [];
+                controls.forEach(function (control) {
+                    var value = control.value.trim();
+                    if (value !== '') parts.push(control.getAttribute('data-param') + '=' + encodeURIComponent(value));
+                });
+                return location.origin + '/' + page + (parts.length ? '?' + parts.join('&') : '');
+            }
+
+            function fit() {
+                if (!size) return;
+                var scale = Math.min(1, preview.clientWidth / size[0]);
+                iframe.style.width = size[0] + 'px';
+                iframe.style.height = size[1] + 'px';
+                iframe.style.transform = 'scale(' + scale + ')';
+                preview.style.height = Math.ceil(size[1] * scale) + 'px';
+            }
+
+            function update() {
+                var value = url();
+                urlInput.value = value;
+                sizeText.textContent = '크기 계산 중…';
+                iframe.src = value;
+            }
+
+            controls.forEach(function (control) { control.addEventListener('change', update); });
+
+            copyButton.addEventListener('click', function () {
+                function done() {
+                    copyButton.textContent = '복사됨';
+                    setTimeout(function () { copyButton.textContent = '복사'; }, 1500);
+                }
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(urlInput.value).then(done, function () {
+                        urlInput.select();
+                        document.execCommand('copy');
+                        done();
+                    });
+                } else {
+                    urlInput.select();
+                    document.execCommand('copy');
+                    done();
+                }
+            });
+
+            window.addEventListener('message', function (event) {
+                if (event.origin !== location.origin || event.source !== iframe.contentWindow) return;
+                if (!event.data || !event.data.kbmOverlaySize) return;
+                size = event.data.kbmOverlaySize;
+                sizeText.innerHTML = 'OBS 크기: 너비 <b>' + size[0] + '</b> · 높이 <b>' + size[1] + '</b>';
+                fit();
+            });
+            window.addEventListener('resize', fit);
+
+            update();
+        }
+
+        Array.prototype.forEach.call(document.querySelectorAll('[data-page]'), setupCard);
+
+        var status = document.getElementById('status');
+        var statusText = document.getElementById('status-text');
+        var lastInput = document.getElementById('last-input');
+        var connection = Overlay.connect(['key', 'button', 'relay'])
+            .on('status', function (connected) {
+                status.classList.toggle('ok', connected);
+                statusText.textContent = connected ? 'KbmOverlay 연결됨' : 'KbmOverlay가 꺼져 있어요';
+                if (!connected) renderRelay(null);
+            })
+            .on('key', function (name, down) {
+                if (down) lastInput.textContent = '방금 누른 키: ' + name;
+            })
+            .on('button', function (name, down) {
+                if (down) lastInput.textContent = '방금 누른 버튼: ' + (KEY_LABELS[name] || name);
+            })
+            .on('relay', renderRelay)
+            .on('relayError', function (message) {
+                var error = document.getElementById('manual-error');
+                error.textContent = message;
+                error.hidden = false;
+            });
+
+        // ---- two PCs ----
+
+        function $(id) { return document.getElementById(id); }
+
+        function setText(el, text, tone) {
+            el.textContent = text;
+            el.className = tone || 'muted';
+        }
+
+        function peerItem(label, buttonText, buttonClass, onClick) {
+            var li = document.createElement('li');
+            var span = document.createElement('span');
+            span.textContent = label;
+            li.appendChild(span);
+            if (buttonText) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = buttonClass || '';
+                button.textContent = buttonText;
+                if (onClick) button.addEventListener('click', onClick); else button.disabled = true;
+                li.appendChild(button);
+            }
+            return li;
+        }
+
+        var lastRelay = null;
+
+        function renderRelay(relay) {
+            lastRelay = relay;
+            var receive = relay ? relay.receive : null;
+            var send = relay ? relay.send : null;
+
+            $('relay-machine').textContent = relay ? relay.machine : '…';
+            $('relay-addresses').textContent = relay && relay.addresses.length ? '(' + relay.addresses.join(', ') + ')' : '';
+
+            // Approval prompt (streaming PC).
+            var pending = receive && receive.pending;
+            $('approval').hidden = !pending;
+            if (pending) {
+                $('approval-name').textContent = pending.name;
+                $('approval-address').textContent = pending.address;
+                $('approval-code').textContent = pending.code;
+            }
+
+            // Waiting for approval (game PC).
+            var waiting = send && send.state === 'waiting';
+            $('waiting').hidden = !waiting;
+            if (waiting) {
+                $('waiting-name').textContent = send.target;
+                $('waiting-code').textContent = send.code;
+            }
+
+            // Header pill.
+            var pillText = '';
+            if (receive && receive.active) pillText = "게임 PC '" + receive.active.name + "' 입력 표시 중";
+            else if (send && send.state === 'sending') pillText = "방송 PC '" + send.target + "'로 보내는 중";
+            $('relay-pill').hidden = !pillText;
+            $('relay-pill-text').textContent = pillText;
+
+            renderReceive(receive);
+            renderSend(send);
+        }
+
+        function renderReceive(receive) {
+            var text = $('receive-text');
+            var toggle = $('receive-toggle');
+            $('network-settings').hidden = !(receive && receive.problem === 'public-network');
+            toggle.disabled = !receive;
+            if (!receive) {
+                setText(text, 'KbmOverlay와 연결되면 보여요.');
+                return;
+            }
+
+            var firewallProblem = receive.problem === 'firewall-needed' || receive.problem === 'firewall-failed';
+            toggle.textContent = !receive.on ? '게임 PC 입력 받기 켜기' : firewallProblem ? '방화벽 허용하고 켜기' : '받기 끄기';
+            toggle.className = receive.on && !firewallProblem ? 'secondary' : '';
+
+            if (!receive.on) {
+                setText(text, '꺼져 있어요. 켜면 같은 공유기의 게임 PC가 이 PC를 찾을 수 있어요. 처음 켤 때 Windows가 방화벽 허용을 위해 관리자 권한을 한 번 물어요.');
+            } else if (receive.problem === 'public-network') {
+                setText(text, "이 PC의 네트워크가 '공용'이라 게임 PC가 접속할 수 없어요. Windows 설정에서 '개인'으로 바꾸면 바로 켜져요.", 'warn');
+            } else if (receive.problem === 'firewall-needed') {
+                setText(text, '방화벽 허용이 필요해요. 아래 버튼을 누르고 Windows가 물으면 "예"를 눌러 주세요.', 'warn');
+            } else if (receive.problem === 'firewall-failed') {
+                setText(text, '방화벽 허용을 하지 못했어요 (관리자 권한 요청이 취소됐을 수 있어요). 다시 눌러 주세요.', 'bad');
+            } else if (receive.problem === 'port-in-use') {
+                setText(text, '투컴용 포트 ' + receive.port + '을 다른 프로그램이 쓰고 있어요.', 'bad');
+            } else if (!receive.listening) {
+                setText(text, '켜는 중…');
+            } else if (receive.active) {
+                setText(text, "게임 PC '" + receive.active.name + "'(" + receive.active.address + ")의 입력을 오버레이에 보여주는 중이에요.", 'good');
+            } else {
+                setText(text, '켜짐 · 게임 PC를 기다리는 중이에요. 게임 PC에서도 KbmOverlay를 실행하세요.');
+            }
+
+            var list = $('paired-list');
+            list.innerHTML = '';
+            receive.paired.forEach(function (peer) {
+                list.appendChild(peerItem('허용한 게임 PC: ' + peer.name, '삭제', 'danger', function () {
+                    if (confirm("'" + peer.name + "'를 목록에서 지울까요? 다음에 연결할 때 다시 허용해야 해요.")) {
+                        connection.send({ cmd: 'forget', id: peer.id });
+                    }
+                }));
+            });
+        }
+
+        function renderSend(send) {
+            var text = $('send-text');
+            var list = $('found-list');
+            list.innerHTML = '';
+            $('stop-sending').hidden = !(send && (send.receiver || ['connecting', 'waiting', 'retrying', 'sending', 'searching'].indexOf(send.state) >= 0));
+            if (!send) {
+                setText(text, 'KbmOverlay와 연결되면 보여요.');
+                return;
+            }
+
+            var name = send.target || (send.receiver && send.receiver.name) || '';
+            switch (send.state) {
+                case 'sending': setText(text, "방송 PC '" + name + "'로 입력을 보내는 중이에요.", 'good'); break;
+                case 'waiting': setText(text, "방송 PC '" + name + "'에서 허용을 기다리는 중이에요.", 'warn'); break;
+                case 'connecting': setText(text, "방송 PC '" + name + "'에 연결하는 중…"); break;
+                case 'searching': setText(text, "방송 PC '" + name + "'를 찾는 중이에요. 방송 PC에서 KbmOverlay가 켜져 있는지 확인하세요."); break;
+                case 'retrying': setText(text, send.message || "방송 PC '" + name + "'에 다시 연결하는 중…", 'warn'); break;
+                case 'denied': setText(text, '방송 PC에서 거절했어요. 다시 보내려면 아래에서 고르세요.', 'bad'); break;
+                case 'forgotten': setText(text, send.message || '방송 PC가 이 PC를 기억하지 못해요. 다시 골라 주세요.', 'warn'); break;
+                default:
+                    if (lastRelay && lastRelay.receive.on && !send.found.length) {
+                        setText(text, '이 PC는 방송 PC로 쓰고 있어요. 이 칸은 게임 PC에서 써요.');
+                        break;
+                    }
+                    setText(text, send.found.length
+                        ? '같은 네트워크에서 방송 PC를 찾았어요. 이 PC 입력을 보낼 PC의 "보내기"를 누르세요.'
+                        : '방송 PC를 찾는 중이에요. 방송 PC의 KbmOverlay에서 "게임 PC 입력 받기"를 켜 두세요.');
+            }
+
+            send.found.forEach(function (f) {
+                var isTarget = send.receiver && send.receiver.id === f.id && send.state !== 'forgotten';
+                var label = f.name + ' (' + f.address + ')';
+                if (isTarget) list.appendChild(peerItem(label, send.state === 'sending' ? '보내는 중' : '연결 대상', 'secondary', null));
+                else list.appendChild(peerItem(label, '보내기', '', function () { connection.send({ cmd: 'send', id: f.id }); }));
+            });
+        }
+
+        $('receive-toggle').addEventListener('click', function () {
+            var receive = lastRelay && lastRelay.receive;
+            if (!receive) return;
+            var firewallProblem = receive.problem === 'firewall-needed' || receive.problem === 'firewall-failed';
+            connection.send({ cmd: 'receive', on: !receive.on || firewallProblem });
+        });
+        $('network-settings').addEventListener('click', function () { connection.send({ cmd: 'networkSettings' }); });
+        $('approve').addEventListener('click', function () {
+            connection.send({ cmd: 'approve', id: lastRelay.receive.pending.id });
+        });
+        $('deny').addEventListener('click', function () {
+            connection.send({ cmd: 'deny', id: lastRelay.receive.pending.id });
+        });
+        $('search').addEventListener('click', function () { connection.send({ cmd: 'search' }); });
+        $('stop-sending').addEventListener('click', function () { connection.send({ cmd: 'stopSending' }); });
+        $('manual-connect').addEventListener('click', function () {
+            $('manual-error').hidden = true;
+            connection.send({ cmd: 'sendTo', address: $('manual-address').value });
+        });
+
+        fetch('info.json').then(function (r) { return r.json(); }).then(function (info) {
+            document.getElementById('admin-notice').hidden = info.elevated;
+            document.title = 'KbmOverlay ' + info.version + ' 설정';
+        }).catch(function () { });
+    })();
+</script>
+</body>
+</html>

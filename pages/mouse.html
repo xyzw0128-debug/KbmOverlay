@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mouse</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="overlay.js"></script>
+    <style>
+        #mouse { display: inline-block; padding: 12px; transform-origin: 0 0; }
+        #mouse svg { display: block; width: 200px; height: auto; overflow: visible; }
+    </style>
+</head>
+<body>
+    <div id="mouse"></div>
+    <script>
+        // mouse.html?scale=1.5
+        // mouse.svg (from Zergatul.Obs.InputOverlay) has elements with ids Mouse1..Mouse5,
+        // MouseScrollUp and MouseScrollDown; this page colors them through theme.css.
+        (function () {
+            'use strict';
+
+            var SVG_NS = 'http://www.w3.org/2000/svg';
+
+            // Glow filter from Zergatul.Obs.InputOverlay's common.js.
+            function addGlowFilter(svg) {
+                var defs = document.createElementNS(SVG_NS, 'defs');
+                defs.innerHTML =
+                    '<filter id="glow" filterUnits="userSpaceOnUse" x="-50%" y="-50%" width="200%" height="200%">' +
+                    '<feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur20"/>' +
+                    '<feColorMatrix in="blur20" type="matrix" values="1 0 0 2 0 0 1 0 2 0 0 0 1 2 0 0 0 0 1 0" result="blur-colored"/>' +
+                    '<feMerge><feMergeNode in="blur-colored"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+                    '</filter>';
+                svg.appendChild(defs);
+            }
+
+            function restart(el, cls) {
+                el.classList.remove('up', 'down', 'released');
+                void el.getBoundingClientRect(); // restart the animation
+                el.classList.add(cls);
+            }
+
+            function start(svgText) {
+                var holder = document.getElementById('mouse');
+                holder.innerHTML = svgText;
+                var svg = holder.querySelector('svg');
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                addGlowFilter(svg);
+
+                var buttons = {};
+                ['Mouse1', 'Mouse2', 'Mouse3', 'Mouse4', 'Mouse5'].forEach(function (id) {
+                    var el = svg.getElementById(id);
+                    if (!el) return;
+                    el.style.removeProperty('fill'); // the svg says fill:none inline; theme.css decides
+                    el.classList.add('mouse-button');
+                    buttons[id] = el;
+                });
+                var scrollUp = svg.getElementById('MouseScrollUp');
+                var scrollDown = svg.getElementById('MouseScrollDown');
+                scrollUp.classList.add('scroll');
+                scrollDown.classList.add('scroll');
+
+                var scale = Overlay.number('scale', 1, 0.25, 4);
+                var width = holder.offsetWidth, height = holder.offsetHeight;
+                holder.style.transform = 'scale(' + scale + ')';
+                Overlay.reportSize(width * scale, height * scale);
+
+                Overlay.connect(['button', 'wheel'])
+                    .on('button', function (name, down) {
+                        var el = buttons[name];
+                        if (!el) return;
+                        if (down) {
+                            el.classList.remove('released');
+                            el.classList.add('pressed');
+                        } else {
+                            el.classList.remove('pressed');
+                            restart(el, 'released');
+                        }
+                    })
+                    .on('wheel', function (dx, dy) {
+                        if (dy > 0) restart(scrollUp, 'up');
+                        else if (dy < 0) restart(scrollDown, 'down');
+                    });
+            }
+
+            fetch('mouse.svg')
+                .then(function (response) {
+                    if (!response.ok) throw new Error('mouse.svg 파일이 없어요.');
+                    return response.text();
+                })
+                .then(start)
+                .catch(function (error) {
+                    Overlay.showError('마우스 그림을 불러오지 못했어요\n' + error.message);
+                });
+        })();
+    </script>
+</body>
+</html>

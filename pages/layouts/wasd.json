@@ -1,0 +1,11 @@
+{
+  "name": "WASD",
+  "rows": [
+    { "h": 0.75, "keys": ["Esc", { "k": "F1", "x": 1 }] },
+    { "y": 0.25, "keys": ["Tilde", "Key1", "Key2", "Key3", "Key4"] },
+    { "keys": [{ "k": "Tab", "w": 1.5 }, "KeyQ", "KeyW", "KeyE", "KeyR"] },
+    { "keys": [{ "k": "CapsLock", "w": 1.75 }, "KeyA", "KeyS", "KeyD", "KeyF", "KeyG"] },
+    { "keys": [{ "k": "LeftShift", "w": 2.25 }, "KeyZ", "KeyX", "KeyC", "KeyV"] },
+    { "keys": [{ "k": "LeftCtrl", "w": 1.25 }, { "k": "LeftAlt", "w": 1.25, "x": 1.25 }, { "k": "Space", "w": 3 }] }
+  ]
+}
