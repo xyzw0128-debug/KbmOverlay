@@ -188,6 +188,7 @@ namespace KbmOverlay.Relay
                 break;
             }
 
+            bool started = false;
             lock (gate)
             {
                 if (myGeneration != generation) return;
@@ -197,37 +198,42 @@ namespace KbmOverlay.Relay
                     listener.ExclusiveAddressUse = true;
                     listener.Start();
                     responder = Discovery.Respond(bindAddress, port, settings.Id, DiscoveryAnswer);
+                    started = true;
                 }
                 catch (SocketException e)
                 {
                     StopLocked();
                     Problem = "port-in-use";
                     Log.Error(I18n.T("receive.portFailed", ("port", port), ("error", e.Message)));
-                    changed();
-                    return;
                 }
-                Listening = true;
-                Problem = null;
-                TcpListener current = listener;
-                var thread = new Thread(() => AcceptLoop(current));
-                thread.IsBackground = true;
-                thread.Name = "RelayAccept";
-                thread.Start();
+                if (started)
+                {
+                    Listening = true;
+                    Problem = null;
+                    TcpListener current = listener;
+                    var thread = new Thread(() => AcceptLoop(current));
+                    thread.IsBackground = true;
+                    thread.Name = "RelayAccept";
+                    thread.Start();
+                }
             }
-            Log.Good(I18n.T("receive.on", ("machine", NetInfo.MachineName)));
+            if (started) Log.Good(I18n.T("receive.on", ("machine", NetInfo.MachineName)));
             changed();
         }
 
+        // changed() runs after leaving gate, never inside it: sending the status takes each settings page's
+        // send lock, and a page that is just connecting holds that lock while Status() waits for gate.
         private bool SetProblem(int myGeneration, string problem)
         {
+            bool differs;
             lock (gate)
             {
                 if (myGeneration != generation) return false;
-                bool differs = Problem != problem;
+                differs = Problem != problem;
                 Problem = problem;
-                if (differs) changed();
-                return true;
             }
+            if (differs) changed();
+            return true;
         }
 
         private void StopLocked()
