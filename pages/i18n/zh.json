@@ -115,6 +115,7 @@
 
   "page.title": "KbmOverlay 设置",
   "page.titleVersion": "KbmOverlay {version} 设置",
+  "page.failed": "设置页面无法启动：{error}。请按 F5 刷新；如果仍然如此，请重新启动 KbmOverlay。",
   "language.label": "语言",
   "language.auto": "自动 ({name})",
   "nav.overlays": "叠加层",
@@ -273,6 +274,7 @@
   "obs.urlLabel": "OBS 地址",
   "copy": "复制地址",
   "copied": "已复制",
+  "copyFailed": "请按 Ctrl+C",
   "obs.changed": "与上次复制的地址不同了。请重新复制，并替换 OBS 来源中的 URL。",
   "size.measuring": "正在计算尺寸…",
   "size.text": "OBS 尺寸：宽度 <b>{width}</b> · 高度 <b>{height}</b>",

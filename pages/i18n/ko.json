@@ -115,6 +115,7 @@
 
   "page.title": "KbmOverlay 설정",
   "page.titleVersion": "KbmOverlay {version} 설정",
+  "page.failed": "설정 페이지를 시작하지 못했어요: {error}. F5로 새로고침해 보고, 계속 그러면 KbmOverlay를 다시 실행해 주세요.",
   "language.label": "언어",
   "language.auto": "자동 ({name})",
   "nav.overlays": "오버레이",
@@ -273,6 +274,7 @@
   "obs.urlLabel": "OBS 주소",
   "copy": "주소 복사",
   "copied": "복사됨",
+  "copyFailed": "Ctrl+C를 누르세요",
   "obs.changed": "마지막으로 복사한 주소와 달라졌어요. 다시 복사해서 OBS 소스의 URL을 바꿔 주세요.",
   "size.measuring": "크기 계산 중…",
   "size.text": "OBS 크기: 너비 <b>{width}</b> · 높이 <b>{height}</b>",

@@ -115,6 +115,7 @@
 
   "page.title": "KbmOverlay 設定",
   "page.titleVersion": "KbmOverlay {version} 設定",
+  "page.failed": "設定ページを開始できませんでした: {error}。F5 で再読み込みし、それでも直らない場合は KbmOverlay を再起動してください。",
   "language.label": "言語",
   "language.auto": "自動 ({name})",
   "nav.overlays": "オーバーレイ",
@@ -273,6 +274,7 @@
   "obs.urlLabel": "OBS 用 URL",
   "copy": "URL をコピー",
   "copied": "コピーしました",
+  "copyFailed": "Ctrl+C を押してください",
   "obs.changed": "前回コピーした URL から変わりました。もう一度コピーして、OBS のソースの URL を置き換えてください。",
   "size.measuring": "サイズを計算中…",
   "size.text": "OBS のサイズ: 幅 <b>{width}</b> · 高さ <b>{height}</b>",

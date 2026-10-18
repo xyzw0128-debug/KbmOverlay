@@ -115,6 +115,7 @@
 
   "page.title": "KbmOverlay settings",
   "page.titleVersion": "KbmOverlay {version} settings",
+  "page.failed": "The settings page could not start: {error}. Refresh it with F5; if this keeps happening, restart KbmOverlay.",
   "language.label": "Language",
   "language.auto": "Automatic ({name})",
   "nav.overlays": "Overlays",
@@ -273,6 +274,7 @@
   "obs.urlLabel": "OBS URL",
   "copy": "Copy URL",
   "copied": "Copied",
+  "copyFailed": "Press Ctrl+C",
   "obs.changed": "Changed since you last copied it. Copy it again and replace the URL in the OBS source.",
   "size.measuring": "Measuring size…",
   "size.text": "OBS size: width <b>{width}</b> · height <b>{height}</b>",

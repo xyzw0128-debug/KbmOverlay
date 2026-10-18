@@ -187,10 +187,17 @@ namespace KbmOverlay
                 Respond(stream, 404, "text/plain; charset=utf-8", Encoding.UTF8.GetBytes("Not found: " + path), !head);
                 return;
             }
-            Respond(stream, 200, ContentType(path), body, !head);
+            // Another website could show the settings page inside its own page and trick a click on a switch
+            // (clickjacking), so only this program's pages may frame it. Overlays stay embeddable anywhere.
+            bool settingsPage = string.Equals(path, "index.html", StringComparison.OrdinalIgnoreCase);
+            Respond(stream, 200, ContentType(path), body, !head, settingsPage ? NoFraming : "");
         }
 
-        private static void Respond(Stream stream, int status, string contentType, byte[] body, bool sendBody)
+        private const string NoFraming =
+            "X-Frame-Options: SAMEORIGIN\r\n" +
+            "Content-Security-Policy: frame-ancestors 'self'\r\n";
+
+        private static void Respond(Stream stream, int status, string contentType, byte[] body, bool sendBody, string extraHeaders = "")
         {
             string reason = status == 200 ? "OK" : status == 400 ? "Bad Request" : status == 403 ? "Forbidden" :
                             status == 404 ? "Not Found" : "Method Not Allowed";
@@ -200,6 +207,7 @@ namespace KbmOverlay
                 "Content-Length: " + body.Length + "\r\n" +
                 "Cache-Control: no-cache\r\n" +
                 "X-Content-Type-Options: nosniff\r\n" +
+                extraHeaders +
                 "Connection: close\r\n\r\n");
             stream.Write(head, 0, head.Length);
             if (sendBody) stream.Write(body, 0, body.Length);

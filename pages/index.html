@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>KbmOverlay</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232DA026' stroke-width='2' stroke-linecap='round'%3E%3Crect x='2.5' y='6' width='19' height='12' rx='2'/%3E%3Cpath d='M6.5 10h1M10.5 10h1M14.5 10h1M8 14h8'/%3E%3C/svg%3E">
     <script src="overlay.js"></script>
     <style>
         :root {
@@ -15,17 +16,20 @@
             --text: #e8e9ec;
             --muted: #9a9ea8;
             --accent: #2DA026;
+            --accent-strong: #1F7F1A; /* behind white text: --accent is too light for it to read well (WCAG AA) */
             --warn: #f2b84b;
-            --bad: #e5534b;
+            --bad: #ec6b63;
             --link: #8ab4f8;
             --font: "Segoe UI", "Malgun Gothic", "Yu Gothic UI", "Microsoft YaHei UI", sans-serif;
+            color-scheme: dark; /* scrollbars, menus and number arrows drawn dark too */
         }
         * { box-sizing: border-box; }
         [hidden] { display: none !important; }
         html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); }
-        /* No blue selection when clicking fast (to try the mouse) or dragging; fields and codes can still be selected. */
+        /* No blue selection (or the browser's menu for it) when clicking fast to try the mouse, or dragging.
+           Fields, codes and .selectable text worth copying (this PC's IP, errors, folder paths) can still be selected. */
         body { -webkit-user-select: none; user-select: none; }
-        input, textarea, code, .code { -webkit-user-select: text; user-select: text; }
+        input, textarea, code, .code, .selectable { -webkit-user-select: text; user-select: text; }
         h2 { font-size: 20px; margin: 0 0 14px; }
         h3 { font-size: 15px; margin: 0 0 10px; }
         p { margin: 0; }
@@ -41,7 +45,7 @@
         .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
                    padding: 18px 12px; background: var(--side); border-right: 1px solid var(--line); }
         .summary { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 0 8px 16px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
-        .brand { font-size: 18px; font-weight: 600; }
+        .brand { margin: 0; font-size: 18px; font-weight: 600; }
         .brand .muted { margin-left: 6px; font-size: 13px; font-weight: 400; }
         .pill { display: inline-flex; align-items: center; gap: 8px; padding: 3px 11px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); font-size: 13px; }
         .dot { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--bad); }
@@ -76,7 +80,7 @@
         .prose p + p { margin-top: 10px; }
         .intro { margin: -4px 0 16px; }
         select, input { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; font: inherit; font-size: 14px; }
-        button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font: inherit; font-size: 14px; cursor: pointer; }
+        button { background: var(--accent-strong); color: #fff; border: 0; border-radius: 6px; padding: 7px 16px; font: inherit; font-size: 14px; cursor: pointer; }
         button:active { transform: translateY(1px); }
         button.secondary { background: transparent; color: var(--text); border: 1px solid var(--line); }
         button.danger { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
@@ -90,7 +94,10 @@
         /* ---- overlay panels: big preview on top, three boxes below ---- */
         .preview { position: relative; overflow: hidden; min-height: 140px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 12px;
                    background: #0b0c0e repeating-conic-gradient(#14161a 0% 25%, #0b0c0e 0% 50%) 0 0 / 24px 24px; }
-        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; pointer-events: none; }
+        /* color-scheme as in the overlay pages: when it differs from theirs, the browser paints the frame white
+           instead of see-through. */
+        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; pointer-events: none;
+                          color-scheme: normal; }
         /* Preview background, top right of every preview: see-through like OBS, or a color to check effects on. */
         .preview-bg { position: absolute; top: 10px; right: 10px; z-index: 1; display: flex; align-items: center; gap: 6px; padding: 5px 7px;
                       border: 1px solid var(--line); border-radius: 16px; background: rgba(23, 24, 27, 0.85); }
@@ -134,7 +141,7 @@
         button.pick-key { position: absolute; padding: 0; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--muted);
                           font-size: clamp(9px, 1.15cqw, 13px); line-height: 1; white-space: nowrap; overflow: hidden; }
         button.pick-key:hover { border-color: var(--muted); color: var(--text); }
-        button.pick-key[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+        button.pick-key[aria-pressed="true"] { background: var(--accent-strong); border-color: var(--accent-strong); color: #fff; }
         button.pick-key.flash { outline: 2px solid var(--warn); outline-offset: 1px; }
         .pick-note { min-height: 1.55em; margin-top: 10px; }
 
@@ -186,8 +193,8 @@
 <div class="app">
     <aside class="sidebar">
         <div class="summary">
-            <div class="brand">KbmOverlay<span class="muted" id="version"></span></div>
-            <span class="pill" id="status"><span class="dot"></span><span id="status-text" data-i18n="status.connecting"></span></span>
+            <h1 class="brand">KbmOverlay<span class="muted" id="version"></span></h1>
+            <span class="pill" id="status" role="status"><span class="dot"></span><span id="status-text" data-i18n="status.connecting"></span></span>
             <span class="pill ok" id="relay-pill" hidden><span class="dot"></span><span id="relay-pill-text"></span></span>
             <span class="muted last-input" id="last-input" data-i18n="input.hint"></span>
         </div>
@@ -237,8 +244,8 @@
     </aside>
 
     <main>
-        <!-- Shown above every panel, so a request is never missed. -->
-        <div class="banner" id="approval" hidden>
+        <!-- Shown above every panel, so a request is never missed; screen readers read it out when it shows. -->
+        <div class="banner" id="approval" role="alert" hidden>
             <p id="approval-text"></p>
             <p><span data-i18n="approval.code"></span> <span class="code" id="approval-code"></span></p>
             <p class="muted" data-i18n="approval.hint"></p>
@@ -248,7 +255,7 @@
             </div>
         </div>
 
-        <div class="banner" id="waiting" hidden>
+        <div class="banner" id="waiting" role="status" hidden>
             <p id="waiting-text"></p>
             <p><span data-i18n="approval.code"></span> <span class="code" id="waiting-code"></span></p>
             <p class="muted" data-i18n="waiting.hint"></p>
@@ -264,7 +271,7 @@
         <!-- Files in the pages folder that hide this version's built-in ones (PageStore.StaleOverrides). -->
         <div class="notice closable" id="stale-notice" hidden>
             <div>
-                <p id="stale-text"></p>
+                <p id="stale-text" class="selectable"></p>
                 <div class="row"><button type="button" class="secondary" id="stale-open" data-i18n="files.open"></button></div>
             </div>
             <button type="button" class="close" id="stale-close" data-i18n-title="admin.close" data-i18n-aria="admin.close">
@@ -516,7 +523,7 @@
             <h2 data-i18n="relay.title"></h2>
             <p class="muted intro">
                 <span data-i18n-html="relay.intro"></span>
-                <b id="relay-machine">…</b> <span id="relay-addresses"></span>
+                <b id="relay-machine" class="selectable">…</b> <span id="relay-addresses" class="selectable"></span>
             </p>
             <div class="columns two">
                 <div class="box">
@@ -551,7 +558,7 @@
                         <input id="manual-address" data-i18n-placeholder="send.manualPlaceholder" data-i18n-aria="send.manualLabel">
                         <button type="button" class="secondary" id="manual-connect" data-i18n="send.manualConnect"></button>
                     </div>
-                    <p class="bad small" id="manual-error" style="margin-top:6px" hidden></p>
+                    <p class="bad small selectable" id="manual-error" role="alert" style="margin-top:6px" hidden></p>
                     <div class="row">
                         <button type="button" class="secondary" id="search" data-i18n="send.search"></button>
                         <button type="button" class="danger" id="stop-sending" data-i18n="send.stop" hidden></button>
@@ -1364,6 +1371,14 @@
                 return !!picker && layoutSelect.value === 'pick';
             }
 
+            // A number outside the field's range is put back inside it: the overlay would use it that way
+            // anyway, and the URL should say what the overlay shows.
+            function clampNumber(control) {
+                if (control.type !== 'number' || control.value === '') return;
+                var value = Math.min(+control.max, Math.max(+control.min, +control.value));
+                if (value !== +control.value) control.value = value;
+            }
+
             var options = savedOptions[page] || {};
             controls.forEach(function (control) {
                 var value = options[control.getAttribute('data-param')];
@@ -1374,6 +1389,7 @@
                 }
                 control.value = value;
                 if (control.tagName === 'SELECT' && control.selectedIndex < 0) control.selectedIndex = 0;
+                clampNumber(control);
             });
             sliders.forEach(function (slider) { slider.render(); });
             if (picker) picker.show(picking());
@@ -1429,6 +1445,7 @@
 
             controls.forEach(function (control) {
                 control.addEventListener('change', function () {
+                    clampNumber(control);
                     var values = {};
                     controls.forEach(function (c) { values[c.getAttribute('data-param')] = c.paramValue ? c.paramValue() : c.value.trim(); });
                     savedOptions[page] = values;
@@ -1442,17 +1459,22 @@
             });
 
             copyButton.addEventListener('click', function () {
+                function flash(text) {
+                    copyButton.textContent = text;
+                    setTimeout(function () { copyButton.textContent = t('copy'); }, 1500);
+                }
                 function done() {
                     copied[page] = urlInput.value;
                     store.set('copied', copied);
                     changedNote.hidden = true;
-                    copyButton.textContent = t('copied');
-                    setTimeout(function () { copyButton.textContent = t('copy'); }, 1500);
+                    flash(t('copied'));
                 }
+                // The URL stays selected, so Ctrl+C copies it when the browser would not.
                 function fallback() {
                     urlInput.select();
-                    document.execCommand('copy');
-                    done();
+                    var ok = false;
+                    try { ok = document.execCommand('copy'); } catch (e) { /* not allowed here */ }
+                    if (ok) done(); else flash(t('copyFailed'));
                 }
                 if (navigator.clipboard) navigator.clipboard.writeText(urlInput.value).then(done, fallback);
                 else fallback();
@@ -1529,8 +1551,8 @@
             .on('exported', function (result) {
                 var text = $('files-result');
                 text.hidden = false;
-                if (result.error) setText(text, t('files.failed', { error: result.error, dir: result.dir }), 'small bad');
-                else setText(text, t(result.count ? 'files.copied' : 'files.opened', { count: result.count, dir: result.dir }), 'small good');
+                if (result.error) setText(text, t('files.failed', { error: result.error, dir: result.dir }), 'small bad selectable');
+                else setText(text, t(result.count ? 'files.copied' : 'files.opened', { count: result.count, dir: result.dir }), 'small good selectable');
             });
 
         $('open-pages').addEventListener('click', function () { connection.send({ cmd: 'exportPages' }); });
@@ -1540,27 +1562,41 @@
         // Forgets the choices this browser remembers (options, colors, picked keys, preview background, closed
         // notices, last panel) and sets the language back to automatic. Two-PC settings stay, and sources
         // already in OBS keep their URLs.
+        // The clicked button hides, so the focus moves to the next question instead of getting lost.
         $('reset-all').addEventListener('click', function () {
             $('reset-ask').hidden = true;
             $('reset-confirm').hidden = false;
+            $('reset-no').focus();
         });
         $('reset-no').addEventListener('click', function () {
             $('reset-confirm').hidden = true;
             $('reset-ask').hidden = false;
+            $('reset-all').focus();
         });
         $('reset-yes').addEventListener('click', function () {
-            location.hash = ''; // its hashchange still saves the panel; the store is cleared after that
-            if (info.langSetting && info.langSetting !== 'auto') connection.send({ cmd: 'language', lang: 'auto' });
-            setTimeout(function () {
-                store.clear();
-                location.reload();
-            }, 300);
+            history.replaceState(null, '', location.pathname); // no #panel, and no hashchange saving it again
+            store.clear();
+            if (info.langSetting && info.langSetting !== 'auto') setLanguage('auto');
+            else location.reload();
         });
 
-        languageSelect.addEventListener('change', function () {
-            connection.send({ cmd: 'language', lang: languageSelect.value });
-            setTimeout(function () { location.reload(); }, 300);
-        });
+        // Tells KbmOverlay and reloads the page once info.json says the language is in use (or after 3 s,
+        // e.g. while not connected), so the page never comes back in the old language.
+        function setLanguage(lang) {
+            connection.send({ cmd: 'language', lang: lang });
+            var tries = 0;
+            (function check() {
+                fetch('info.json', { cache: 'no-store' })
+                    .then(function (response) { return response.json(); })
+                    .then(function (now) { return now.langSetting === lang; }, function () { return false; })
+                    .then(function (done) {
+                        if (done || ++tries >= 30) location.reload();
+                        else setTimeout(check, 100);
+                    });
+            })();
+        }
+
+        languageSelect.addEventListener('change', function () { setLanguage(languageSelect.value); });
 
         // ---- two PCs ----
 
@@ -1585,6 +1621,14 @@
             return li;
         }
 
+        // Text (or markup) that only changes when it really differs: a status report comes often, and the
+        // banners are read out by screen readers on every change.
+        function fillOnce(element, value, html) {
+            if (element.filledWith === value) return;
+            element.filledWith = value;
+            if (html) element.innerHTML = value; else element.textContent = value;
+        }
+
         var lastRelay = null;
 
         function renderRelay(relay) {
@@ -1595,21 +1639,21 @@
             $('relay-machine').textContent = relay ? relay.machine : '…';
             $('relay-addresses').textContent = relay && relay.addresses.length ? '(' + relay.addresses.join(', ') + ')' : '';
 
-            // Approval prompt (streaming PC).
+            // Approval prompt (streaming PC). Filled before it shows, so a screen reader reads the whole request.
             var pending = receive && receive.pending;
-            $('approval').hidden = !pending;
             if (pending) {
-                $('approval-text').innerHTML = t.html('approval.text', { name: pending.name, address: pending.address });
-                $('approval-code').textContent = pending.code;
+                fillOnce($('approval-text'), t.html('approval.text', { name: pending.name, address: pending.address }), true);
+                fillOnce($('approval-code'), pending.code);
             }
+            $('approval').hidden = !pending;
 
             // Waiting for approval (game PC).
             var waiting = send && send.state === 'waiting';
-            $('waiting').hidden = !waiting;
             if (waiting) {
-                $('waiting-text').innerHTML = t.html('waiting.text', { name: send.target });
-                $('waiting-code').textContent = send.code;
+                fillOnce($('waiting-text'), t.html('waiting.text', { name: send.target }), true);
+                fillOnce($('waiting-code'), send.code);
             }
+            $('waiting').hidden = !waiting;
 
             var attention = (pending ? 1 : 0) + (waiting ? 1 : 0);
             $('relay-badge').hidden = !attention;
@@ -1719,6 +1763,20 @@
         $('manual-connect').addEventListener('click', function () {
             $('manual-error').hidden = true;
             connection.send({ cmd: 'sendTo', address: $('manual-address').value });
+        });
+        $('manual-address').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && !event.isComposing) $('manual-connect').click();
+        });
+    }).catch(function (error) {
+        // A mistake above (or in a changed copy of this page) would otherwise leave a half-filled page without a word.
+        console.error(error);
+        Overlay.i18n().then(function (t) {
+            var notice = document.createElement('div');
+            notice.className = 'notice selectable';
+            notice.setAttribute('role', 'alert');
+            notice.textContent = t('page.failed', { error: (error && error.message) || String(error) });
+            var main = document.querySelector('main');
+            main.insertBefore(notice, main.firstChild);
         });
     });
 </script>

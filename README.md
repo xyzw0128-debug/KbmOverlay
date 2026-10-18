@@ -254,6 +254,8 @@ If you find a security problem, report it privately as described in [SECURITY.md
 - The input stream (`/ws`) only accepts pages served by KbmOverlay itself. If another website open in your browser
   tries to connect, it is refused and a warning appears in the console. Two-PC settings (turning receiving on,
   allowing a PC, …) can only be changed through this stream, so other websites cannot press them for you.
+- The settings page cannot be shown inside another website (`X-Frame-Options`, `frame-ancestors`), so a website
+  cannot hide it under its own buttons to trick you into clicking a switch. Overlays can still be embedded.
 
 **Two PCs (port 5521)**
 - Only a streaming PC with receiving turned on opens this port, and it accepts connections only from private
