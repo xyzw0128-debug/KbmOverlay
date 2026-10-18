@@ -9,7 +9,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>KbmOverlay</AssemblyName>
     <RootNamespace>KbmOverlay</RootNamespace>
-    <Version>0.6.0</Version>
+    <Version>0.6.1</Version>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
     <DebugType>none</DebugType>
