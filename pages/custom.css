@@ -1,0 +1,24 @@
+/*
+ * Your own look for every overlay. "Open the pages folder" on the settings page copies this file next to
+ * the exe (pages\custom.css); edit that copy and refresh the source in OBS to see the change.
+ * Unlike the other pages, this file stays yours when KbmOverlay is updated: the overlays load the built-in
+ * theme.css first and then this file, so anything here wins over theme.css.
+ * Values in an overlay URL (the settings page builds them) still win over the ones here.
+ *
+ * Take out the comment marks around a line to use it. All the variables and rules are in theme.css
+ * (https://github.com/xyzw0128-debug/KbmOverlay/blob/main/pages/theme.css); any rule can be changed here too.
+ */
+:root {
+    /* --line: #ffffff; */            /* key outline and text */
+    /* --pressed: #2DA026; */         /* while held */
+    /* --released: #96CF13; */        /* start color of the fade after release */
+    /* --glow: #23ADFF; */
+    /* --glow-size: 1; */             /* 0 = no glow, 2 = twice as wide */
+    /* --key-radius: 10px; */         /* key corners */
+    /* --idle-opacity: 1; */          /* keys and mouse while not pressed: 0 = hidden until pressed */
+    /* --key-release-time: 0.5s; */   /* fade after release, keyboard */
+    /* --mouse-release-time: 0.25s; */ /* fade after release, mouse */
+    /* --ripple: #2DA026; */          /* ring of the ripple press effect */
+    /* --ripple-time: 0.45s; */
+    /* --font: Calibri, "Malgun Gothic", sans-serif; */
+}

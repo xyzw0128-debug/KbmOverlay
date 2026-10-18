@@ -1,5 +1,7 @@
 /*
- * Colors and animations for all overlays. Change them here, or copy a rule into one page.
+ * Colors and animations for all overlays. This file stays built in so updates reach it; to change the
+ * look, put your values or rules in custom.css ("Open the pages folder" on the settings page), which the
+ * overlays load after this one.
  * Key look (white outline, green press with blue glow, green fade on release) and the mouse
  * colors come from Zergatul.Obs.InputOverlay (MIT, see THIRD-PARTY-NOTICES.txt).
  * An overlay URL can also set colors (?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF),

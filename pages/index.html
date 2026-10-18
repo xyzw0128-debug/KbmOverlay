@@ -63,7 +63,7 @@
         /* ---- shared pieces ---- */
         .notice { border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
         .notice.closable { display: flex; align-items: flex-start; gap: 12px; }
-        .notice.closable > span { flex: 1; }
+        .notice.closable > :first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
         button.close { flex-shrink: 0; display: flex; padding: 3px; margin: -2px -6px -2px 0; border-radius: 6px; background: none; color: inherit; }
         button.close:hover { background: var(--hover); }
         button.close svg { width: 16px; height: 16px; }
@@ -233,6 +233,17 @@
         <div class="notice closable" id="admin-notice" hidden>
             <span data-i18n="admin.notice"></span>
             <button type="button" class="close" id="admin-notice-close" data-i18n-title="admin.close" data-i18n-aria="admin.close">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            </button>
+        </div>
+
+        <!-- Files in the pages folder that hide this version's built-in ones (PageStore.StaleOverrides). -->
+        <div class="notice closable" id="stale-notice" hidden>
+            <div>
+                <p id="stale-text"></p>
+                <div class="row"><button type="button" class="secondary" id="stale-open" data-i18n="files.open"></button></div>
+            </div>
+            <button type="button" class="close" id="stale-close" data-i18n-title="admin.close" data-i18n-aria="admin.close">
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
             </button>
         </div>
@@ -474,6 +485,29 @@
             store.set('adminNoticeClosed', true);
         });
 
+        // ---- files in the pages folder that hide this version's pages; X hides it until the list changes ----
+
+        var stalePages = info.stalePages || [];
+        $('stale-text').textContent = t('stale.notice', { files: stalePages.join(', '), dir: info.pagesDir || '' });
+        $('stale-notice').hidden = !stalePages.length || store.get('staleNoticeClosed') === stalePages.join(',');
+        $('stale-close').addEventListener('click', function () {
+            $('stale-notice').hidden = true;
+            store.set('staleNoticeClosed', stalePages.join(','));
+        });
+
+        // ---- keyboard layouts added to the pages folder (layouts/name.json), listed before "Pick keys" ----
+
+        var layoutMenu = document.querySelector('[data-panel="keyboard"] select[data-param="layout"]');
+        (info.layouts || []).forEach(function (name) {
+            var known = Array.prototype.some.call(layoutMenu.options, function (option) {
+                return (option.value || 'wasd').toLowerCase() === name.toLowerCase();
+            });
+            if (known) return;
+            var option = el('option', null, name);
+            option.value = name;
+            layoutMenu.insertBefore(option, layoutMenu.querySelector('option[value="pick"]'));
+        });
+
         // ---- language ----
 
         var languageSelect = $('language');
@@ -598,24 +632,27 @@
             });
         }
 
-        // Show the colors and look theme.css really has; it can be edited in the pages folder.
-        fetch('theme.css')
-            .then(function (response) { return response.ok ? response.text() : ''; })
-            .then(function (css) {
-                var root = /:root\s*\{([^}]*)\}/.exec(css);
-                if (!root) return;
-                function cssValue(name) {
-                    var match = new RegExp(name + '\\s*:\\s*([^;]+);').exec(root[1]);
-                    return match ? match[1].trim() : null;
-                }
-                COLOR_NAMES.forEach(function (name) {
-                    var value = cssValue('--' + name);
-                    var hex = value && cssToHex(value);
-                    if (hex) defaults[name] = hex;
-                });
-                Object.keys(lookDefaults).forEach(function (name) {
-                    var number = parseFloat(cssValue(name));
-                    if (isFinite(number)) lookDefaults[name] = number;
+        // Show the colors and look the overlays really have: theme.css, then custom.css from the pages folder.
+        Promise.all(['theme.css', 'custom.css'].map(function (file) {
+            return fetch(file).then(function (response) { return response.ok ? response.text() : ''; });
+        }))
+            .then(function (files) {
+                files.forEach(function (css) {
+                    var root = /:root\s*\{([^}]*)\}/.exec(css.replace(/\/\*[\s\S]*?\*\//g, '')); // lines commented out do not count
+                    if (!root) return;
+                    function cssValue(name) {
+                        var match = new RegExp(name + '\\s*:\\s*([^;]+);').exec(root[1]);
+                        return match ? match[1].trim() : null;
+                    }
+                    COLOR_NAMES.forEach(function (name) {
+                        var value = cssValue('--' + name);
+                        var hex = value && cssToHex(value);
+                        if (hex) defaults[name] = hex;
+                    });
+                    Object.keys(lookDefaults).forEach(function (name) {
+                        var number = parseFloat(cssValue(name));
+                        if (isFinite(number)) lookDefaults[name] = number;
+                    });
                 });
                 refreshCards();
             })
@@ -1114,6 +1151,7 @@
             });
 
         $('open-pages').addEventListener('click', function () { connection.send({ cmd: 'exportPages' }); });
+        $('stale-open').addEventListener('click', function () { connection.send({ cmd: 'exportPages' }); });
 
         languageSelect.addEventListener('change', function () {
             connection.send({ cmd: 'language', lang: languageSelect.value });

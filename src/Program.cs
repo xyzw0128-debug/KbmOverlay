@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using KbmOverlay.Relay;
 using static KbmOverlay.I18n;
@@ -16,6 +17,7 @@ namespace KbmOverlay
     internal static class Program
     {
         private const int DefaultPort = 5520;
+        private static readonly Regex LayoutName = new Regex("^[A-Za-z0-9_-]+$"); // what keyboard.html?layout= accepts
 
         private static int Main(string[] args)
         {
@@ -157,7 +159,10 @@ namespace KbmOverlay
                     ["lang"] = I18n.Lang,
                     ["langSetting"] = langChoice,
                     ["systemLang"] = I18n.NameOf(I18n.SystemLang),
-                    ["languages"] = languages
+                    ["languages"] = languages,
+                    ["layouts"] = LayoutNames(pages),
+                    ["stalePages"] = pages.StaleOverrides(),
+                    ["pagesDir"] = pages.OverrideDir
                 });
             };
 
@@ -238,6 +243,13 @@ namespace KbmOverlay
                 Log.Warn(T("banner.notAdmin2"));
                 Log.Info("");
             }
+            List<string> stale = pages.StaleOverrides();
+            if (stale.Count > 0)
+            {
+                Log.Warn(T("banner.stalePages1", ("files", string.Join(", ", stale))));
+                Log.Warn(T("banner.stalePages2", ("dir", pages.OverrideDir)));
+                Log.Info("");
+            }
             Log.Info(T("banner.close"));
             Log.Info("");
 
@@ -295,6 +307,20 @@ namespace KbmOverlay
                 Log.Warn(T("export.failed", ("error", e.Message), ("dir", pages.OverrideDir)));
             }
             return Json.Write(result);
+        }
+
+        // Keyboard layouts for the settings page's Layout menu: the built-in ones and any layouts/name.json added
+        // to the pages folder. Names keyboard.html could not load (other characters) are left out.
+        private static List<string> LayoutNames(PageStore pages)
+        {
+            var names = new List<string>();
+            foreach (string path in pages.List("layouts/"))
+            {
+                if (!path.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) continue;
+                string name = path.Substring("layouts/".Length, path.Length - "layouts/".Length - ".json".Length);
+                if (LayoutName.IsMatch(name)) names.Add(name);
+            }
+            return names;
         }
 
         private static void Url(string url, string label)

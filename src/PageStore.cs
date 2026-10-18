@@ -74,12 +74,21 @@ namespace KbmOverlay
             return names;
         }
 
-        // Writes the built-in pages to OverrideDir, keeping files that already exist.
+        // Files meant to be changed in the pages folder: custom.css and the keyboard layouts. A copy of any
+        // other file would keep hiding the built-in one after KbmOverlay is updated, with its new features.
+        private static bool IsCustomizable(string name)
+        {
+            return name.Equals("custom.css", StringComparison.OrdinalIgnoreCase) ||
+                   name.StartsWith("layouts/", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Writes custom.css and the built-in layouts to OverrideDir for customizing, keeping files that already exist.
         public int Export()
         {
             int written = 0;
             foreach (KeyValuePair<string, byte[]> page in embedded)
             {
+                if (!IsCustomizable(page.Key)) continue;
                 string file = Path.Combine(OverrideDir, page.Key.Replace('/', Path.DirectorySeparatorChar));
                 if (File.Exists(file)) continue;
                 Directory.CreateDirectory(Path.GetDirectoryName(file));
@@ -87,6 +96,36 @@ namespace KbmOverlay
                 written++;
             }
             return written;
+        }
+
+        // Files in OverrideDir that differ from the built-in file they hide (other than custom.css and the
+        // layouts), e.g. left over from an older version, which copied every page. While they are there,
+        // this version's changes to those files do not show.
+        public List<string> StaleOverrides()
+        {
+            var stale = new List<string>();
+            foreach (KeyValuePair<string, byte[]> page in embedded)
+            {
+                if (IsCustomizable(page.Key)) continue;
+                string file = Path.Combine(OverrideDir, page.Key.Replace('/', Path.DirectorySeparatorChar));
+                try
+                {
+                    if (File.Exists(file) && !Same(File.ReadAllBytes(file), page.Value)) stale.Add(page.Key);
+                }
+                catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+                {
+                }
+            }
+            stale.Sort(StringComparer.OrdinalIgnoreCase);
+            return stale;
+        }
+
+        private static bool Same(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+                if (a[i] != b[i]) return false;
+            return true;
         }
     }
 }

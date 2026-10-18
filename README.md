@@ -73,7 +73,7 @@ streaming PC only *receives* input, and nobody can connect without you allowing 
 
 | URL | Shows | Options |
 |---|---|---|
-| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full`; `keys=KeyW,KeyA,…` (only these keys); `scale=1.5` |
+| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full` or [your own](#editing-the-files); `keys=KeyW,KeyA,…` (only these keys); `scale=1.5` |
 | `http://localhost:5520/mouse.html` | Mouse buttons and wheel | `scale=1.5` |
 | `http://localhost:5520/mouse-move.html` | Ring showing the mouse's direction | `size=400` (px), `sens=1` (sensitivity) |
 
@@ -102,8 +102,8 @@ KbmOverlay picks the language in this order:
 
 Translations live in `pages/i18n/<code>.json`, shared by the console and the pages. To add or fix a language, press
 **Open the pages folder** under **About** on the settings page (see [Editing the files](#editing-the-files)), then add
-or edit `i18n/<code>.json` in that folder (copy `en.json` to start).
-It is picked up without rebuilding. Use a two-letter code (`fr`) or a region (`zh-TW`, used automatically on
+`i18n/<code>.json` to that folder, starting from a copy of
+[en.json](https://github.com/xyzw0128-debug/KbmOverlay/blob/main/pages/i18n/en.json). It is picked up without rebuilding. Use a two-letter code (`fr`) or a region (`zh-TW`, used automatically on
 Traditional Chinese Windows). Keys missing from a file fall back to English.
 
 The Japanese and Chinese translations were not written by native speakers; corrections are welcome.
@@ -129,19 +129,23 @@ After changing something, copy the URL again and replace it in the OBS source.
 
 ### Editing the files
 
-Only needed to add a translation or to change the pages themselves. On the settings page, press
-**Open the pages folder** under **About** (or run `KbmOverlay.exe --export-pages`). This copies the built-in pages to
-a `pages` folder next to the exe, keeping files already there, and opens it. Files there take priority over the
-built-in pages, so edit them and refresh the source in OBS to see the change. Delete a file to go back to the built-in
-version. If the folder cannot be made (for example when the exe is in `Program Files`), move the exe somewhere you can
-write to, such as the desktop.
+Only needed to change the look with CSS yourself, or to add keyboard layouts or a translation. On the settings page,
+press **Open the pages folder** under **About** (or run `KbmOverlay.exe --export-pages`). This copies `custom.css` and
+the keyboard layouts (`layouts/*.json`) to a `pages` folder next to the exe, keeping files already there, and opens it.
+Edit them and refresh the source in OBS to see the change. If the folder cannot be made (for example when the exe is in
+`Program Files`), move the exe somewhere you can write to, such as the desktop.
 
-- The colors and the look (`--pressed`, `--glow-size`, `--key-release-time`, …) at the top of `theme.css` apply to
-  every overlay. Values in an overlay URL win over these.
-- Add `layouts/name.json` and use it as `keyboard.html?layout=name`.
+- `custom.css`: every overlay loads it after the built-in `theme.css`, so what is in it wins. The colors and the look
+  (`--pressed`, `--glow-size`, `--key-release-time`, …) are in it as comments; take out the comment marks around a line
+  and change the value. Other CSS rules work too. Values in an overlay URL win over these.
+- Add `layouts/name.json` and use it as `keyboard.html?layout=name`. After a refresh, the settings page lists it under
+  **Layout** too.
 
-A `pages` folder made by an older version keeps its old files, which may lack newer features. Delete the files you
-did not change to use the built-in ones again.
+These files stay yours when KbmOverlay is updated. The other pages (`theme.css`, `keyboard.html`, `overlay.js`, …)
+stay inside the exe, so updates reach them. Older versions copied those too, and an old copy in the `pages` folder
+hides the new features and fixes. When a copy differs from the built-in file, KbmOverlay's window and the top of the
+settings page name it; unless you changed it on purpose, delete it. If you had changed `theme.css`, move just your
+changed lines into `custom.css` and delete `theme.css`.
 
 ### Keyboard layout files
 
@@ -183,7 +187,7 @@ The names match Zergatul Input Overlay, so its pages are easy to port.
 |---|---|
 | `--port 5530` | Overlay port (default 5520). Change the port in your OBS URLs too. Avoid 5521, which two PCs use. |
 | `--lang ja` | Language of the console and the settings page (`en`, `ko`, `ja`, `zh`, …). |
-| `--export-pages` | Copy the built-in pages to a `pages` folder. Existing files are not overwritten. Same as **Open the pages folder** on the settings page. |
+| `--export-pages` | Copy `custom.css` and the keyboard layouts to a `pages` folder. Existing files are not overwritten. Same as **Open the pages folder** on the settings page. |
 | `--no-browser` | Do not open the settings page when starting, e.g. when KbmOverlay starts with Windows. **Enter** in its window still opens it. |
 | `--firewall-check` | Show the streaming PC's firewall status for Private, Domain and Public networks (read only). For troubleshooting two PCs. |
 
