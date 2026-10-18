@@ -57,6 +57,7 @@
   "firewall.timeout": "방화벽 설정이 끝나지 않았어요.",
   "firewall.failed": "방화벽 규칙을 추가하지 못했어요.",
   "firewall.uacCancelled": "관리자 권한 요청(UAC)이 취소됐어요.",
+  "firewall.startFailed": "방화벽 설정을 시작하지 못했어요 ({error}).",
 
   "relay.banner": "  투컴 (이 PC 이름: {machine})",
   "relay.receiveOn": "    방송 PC로 쓰는 중: 게임 PC 입력 받기 켜짐",
@@ -78,12 +79,14 @@
   "receive.portFailed": "  투컴용 포트 {port}를 열 수 없어요: {error}",
   "receive.on": "  투컴 받기 켜짐: 게임 PC에서 KbmOverlay를 실행하면 이 PC({machine})를 찾아요.",
   "receive.error": "게임 PC 연결을 처리하다가 오류가 났어요: {error}",
+  "receive.startError": "투컴 받기를 켜다가 오류가 났어요: {error}",
   "receive.request1": "  게임 PC '{name}'({address})가 이 PC로 키보드·마우스 입력을 보내려고 해요.",
   "receive.request2": "  확인 숫자: {code}  (게임 PC 화면의 숫자와 같으면 허용하세요)",
   "receive.request3": "  허용하려면 Y, 거절하려면 N을 누르세요. 설정 페이지에서도 고를 수 있어요.",
   "receive.allowed": "  '{name}'를 허용했어요. 다음부터는 묻지 않고 연결돼요.",
   "receive.denied": "  '{name}'의 연결 요청을 거절했어요.",
   "receive.expired": "  '{name}'의 연결 요청을 받지 않았어요 (시간 초과).",
+  "receive.withdrawn": "  게임 PC '{name}'에서 연결 요청을 취소했거나 연결이 끊겼어요.",
   "receive.connected": "  게임 PC '{name}'({address}) 연결됨. 이제 오버레이에 게임 PC 입력이 보여요.",
   "receive.disconnected": "  게임 PC '{name}' 연결이 끊겼어요. 다시 연결될 때까지 이 PC 입력을 보여줘요.",
 

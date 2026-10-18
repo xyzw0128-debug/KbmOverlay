@@ -57,6 +57,7 @@
   "firewall.timeout": "ファイアウォールの設定が完了しませんでした。",
   "firewall.failed": "ファイアウォールの規則を追加できませんでした。",
   "firewall.uacCancelled": "管理者権限の確認 (UAC) がキャンセルされました。",
+  "firewall.startFailed": "ファイアウォールの設定を開始できませんでした ({error})。",
 
   "relay.banner": "  2台構成 (この PC の名前: {machine})",
   "relay.receiveOn": "    配信 PC として使用中: ゲーム PC からの受信がオン",
@@ -78,12 +79,14 @@
   "receive.portFailed": "  2台構成用のポート {port} を開けません: {error}",
   "receive.on": "  受信がオンになりました。ゲーム PC で KbmOverlay を起動すると、この PC ({machine}) が見つかります。",
   "receive.error": "ゲーム PC との接続の処理中にエラーが発生しました: {error}",
+  "receive.startError": "受信をオンにする処理中にエラーが発生しました: {error}",
   "receive.request1": "  ゲーム PC '{name}' ({address}) が、この PC にキーボード・マウスの入力を送ろうとしています。",
   "receive.request2": "  確認コード: {code}  (ゲーム PC に表示されたコードと同じなら許可してください)",
   "receive.request3": "  許可は Y、拒否は N を押してください。設定ページでも選べます。",
   "receive.allowed": "  '{name}' を許可しました。次回からは確認なしで接続されます。",
   "receive.denied": "  '{name}' からの要求を拒否しました。",
   "receive.expired": "  '{name}' からの要求は応答がないまま期限切れになりました。",
+  "receive.withdrawn": "  ゲーム PC '{name}' が要求を取り消したか、接続が切れました。",
   "receive.connected": "  ゲーム PC '{name}' ({address}) が接続しました。オーバーレイにゲーム PC の入力が表示されます。",
   "receive.disconnected": "  ゲーム PC '{name}' との接続が切れました。再接続するまでこの PC の入力を表示します。",
 

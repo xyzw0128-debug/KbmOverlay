@@ -33,7 +33,8 @@ namespace KbmOverlay.Relay
             public int Port;
         }
 
-        private enum Outcome { Ended, Failed, Denied, Forgotten }
+        // Cancelled: the user picked another streaming PC or stopped sending while this attempt ran.
+        private enum Outcome { Ended, Failed, Denied, Forgotten, Cancelled }
 
         private readonly Settings settings;
         private readonly InputHub hub;
@@ -53,6 +54,7 @@ namespace KbmOverlay.Relay
         private string forgottenId;   // paired streaming PC that no longer knows this PC
         private List<FoundReceiver> choosing; // list shown after S when several were found
         private TcpClient current;
+        private int generation;       // bumps on every user choice so an attempt for an older choice gives up quietly
         private string state = "idle";
         private string targetName;
         private string code;
@@ -88,6 +90,7 @@ namespace KbmOverlay.Relay
                 forgottenId = null;
                 choosing = null;
                 message = null;
+                generation++;
                 current?.Close();
             }
             Log.Info(I18n.T("send.requesting", ("name", receiver.Name)));
@@ -116,6 +119,7 @@ namespace KbmOverlay.Relay
                 consent = new Target { Address = address.ToString(), Port = port, Name = address.ToString() };
                 forgottenId = null;
                 message = null;
+                generation++;
                 current?.Close();
             }
             Log.Info(I18n.T("send.requestingAddress", ("address", address)));
@@ -137,6 +141,7 @@ namespace KbmOverlay.Relay
                 forgottenId = null;
                 announced.Clear();
                 message = null;
+                generation++;
                 current?.Close();
             }
             Log.Info(I18n.T("send.stopped"));
@@ -283,6 +288,9 @@ namespace KbmOverlay.Relay
 
         private void ConnectOnce()
         {
+            // Read before the target: a choice made in between only makes this attempt give up early.
+            int attempt;
+            lock (gate) attempt = generation;
             Target target = PickTarget(out bool mayPair);
             if (target == null)
             {
@@ -307,9 +315,11 @@ namespace KbmOverlay.Relay
                 return;
             }
 
-            Outcome outcome = Connect(target, mayPair, out string failure);
+            Outcome outcome = Connect(target, mayPair, attempt, out string failure);
             switch (outcome)
             {
+                case Outcome.Cancelled:
+                    break; // not a refusal: go on with the new choice right away
                 case Outcome.Ended:
                     if (PickTarget(out _) != null) // not when the user just turned sending off
                         Log.Warn(I18n.T("send.lost", ("name", target.Name)));
@@ -363,13 +373,21 @@ namespace KbmOverlay.Relay
             }
         }
 
-        private Outcome Connect(Target target, bool mayPair, out string failure)
+        // True once the user picked another streaming PC or stopped sending after this attempt began.
+        private bool Superseded(int attempt)
+        {
+            lock (gate) return generation != attempt;
+        }
+
+        private Outcome Connect(Target target, bool mayPair, int attempt, out string failure)
         {
             failure = null;
             var tcp = new TcpClient(AddressFamily.InterNetwork);
             lock (gate) current = tcp;
             try
             {
+                // A choice made before current was set had nothing to close.
+                if (Superseded(attempt)) return Outcome.Cancelled;
                 SetState("connecting", target.Name, null);
                 IAsyncResult pendingConnect = tcp.BeginConnect(target.Address, target.Port, null, null);
                 if (!pendingConnect.AsyncWaitHandle.WaitOne(ConnectTimeoutMs))
@@ -464,7 +482,8 @@ namespace KbmOverlay.Relay
                             failure = I18n.T("send.busyPairing");
                             return Outcome.Failed;
                         default:
-                            return Outcome.Denied;
+                            // A refusal of a choice the user already replaced must not clear the new one.
+                            return Superseded(attempt) ? Outcome.Cancelled : Outcome.Denied;
                     }
                 }
             }
@@ -472,7 +491,8 @@ namespace KbmOverlay.Relay
                                       e is InvalidDataException || e is CryptographicException || e is ArgumentException ||
                                       e is FormatException)
             {
-                if (state == "waiting") return Outcome.Denied; // no answer in time, or the request was cancelled
+                if (Superseded(attempt)) return Outcome.Cancelled; // closed by ChooseFound, ChooseAddress or StopSending
+                if (state == "waiting") return Outcome.Denied; // no answer in time, or the streaming PC dropped the request
                 failure = failure ?? I18n.T("send.failed", ("address", target.Address));
                 return state == "sending" ? Outcome.Ended : Outcome.Failed;
             }

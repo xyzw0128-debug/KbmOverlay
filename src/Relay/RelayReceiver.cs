@@ -34,6 +34,9 @@ namespace KbmOverlay.Relay
             public readonly ManualResetEventSlim Decided = new ManualResetEventSlim();
         }
 
+        // Withdrawn: the game PC closed the connection before anyone answered.
+        private enum Answer { Allowed, Denied, Busy, Withdrawn }
+
         private sealed class Session
         {
             public string Id;
@@ -132,6 +135,27 @@ namespace KbmOverlay.Relay
 
         private void StartListening(int myGeneration, bool userAction)
         {
+            try
+            {
+                TryStartListening(myGeneration, userAction);
+            }
+            catch (Exception e)
+            {
+                // An exception escaping this thread would end the whole program.
+                Log.Error(I18n.T("receive.startError", ("error", e.Message)));
+                try
+                {
+                    if (!Listening) SetProblem(myGeneration, "firewall-failed"); // shows the button that tries again
+                }
+                catch (Exception)
+                {
+                    // Sending the status failed too; the problem is set and goes out with the next status.
+                }
+            }
+        }
+
+        private void TryStartListening(int myGeneration, bool userAction)
+        {
             bool allowPublic;
             lock (settings) allowPublic = settings.AllowPublic;
             int required = Firewall.ProfileDomain | Firewall.ProfilePrivate | (allowPublic ? Firewall.ProfilePublic : 0);
@@ -180,7 +204,9 @@ namespace KbmOverlay.Relay
                         }
                     }
                 }
+                // UnauthorizedAccessException: how .NET reports E_ACCESSDENIED from the firewall COM objects.
                 catch (Exception e) when (e is COMException || e is InvalidCastException || e is TypeLoadException ||
+                                          e is UnauthorizedAccessException ||
                                           e is Microsoft.CSharp.RuntimeBinder.RuntimeBinderException)
                 {
                     Log.Warn(I18n.T("receive.firewallUnknown", ("error", e.Message)));
@@ -411,11 +437,10 @@ namespace KbmOverlay.Relay
                             break;
 
                         case "pair":
-                            if (!AskUser(peerId, name, address, keys.Code, tcp))
-                            {
-                                channel.Send("{\"type\":\"denied\"}");
-                                return;
-                            }
+                            Answer answer = AskUser(peerId, name, address, keys.Code, tcp);
+                            if (answer == Answer.Busy) channel.Send("{\"type\":\"busy\"}");
+                            else if (answer == Answer.Denied) channel.Send("{\"type\":\"denied\"}");
+                            if (answer != Answer.Allowed) return; // Withdrawn: the game PC already closed the connection
                             lock (settings)
                             {
                                 settings.Senders.RemoveAll(p => p.Id == peerId);
@@ -449,8 +474,8 @@ namespace KbmOverlay.Relay
             }
         }
 
-        // Shows the prompt and waits for the user. Returns true if approved.
-        private bool AskUser(string peerId, string name, string address, string code, TcpClient tcp)
+        // Shows the prompt and waits for the user.
+        private Answer AskUser(string peerId, string name, string address, string code, TcpClient tcp)
         {
             var request = new Pending
             {
@@ -462,7 +487,10 @@ namespace KbmOverlay.Relay
             };
             lock (gate)
             {
-                if (pending != null || !Listening) return false;
+                if (!Listening) return Answer.Denied;
+                // Another request is on screen. Never replaced: the user may be comparing its code right now.
+                // The game PC asks again a few seconds later.
+                if (pending != null) return Answer.Busy;
                 pending = request;
             }
 
@@ -474,10 +502,11 @@ namespace KbmOverlay.Relay
             changed();
 
             DateTime deadline = DateTime.UtcNow.AddMilliseconds(ApprovalTimeoutMs);
+            bool closed = false;
             while (!request.Decided.Wait(500))
             {
                 // Stop waiting if the game PC gave up (closed the connection).
-                bool closed = tcp.Client.Poll(0, SelectMode.SelectRead) && tcp.Client.Available == 0;
+                closed = tcp.Client.Poll(0, SelectMode.SelectRead) && tcp.Client.Available == 0;
                 if (closed || DateTime.UtcNow > deadline) break;
             }
 
@@ -485,18 +514,28 @@ namespace KbmOverlay.Relay
             {
                 if (pending == request) pending = null;
             }
-            bool approved = request.Decided.IsSet && request.Approved;
-            if (approved)
+            bool decided = request.Decided.IsSet;
+            Answer answer;
+            if (decided && request.Approved)
             {
+                answer = Answer.Allowed;
                 Log.Good(I18n.T("receive.allowed", ("name", name)));
+            }
+            else if (!decided && closed)
+            {
+                // Cancelled on the game PC (perhaps to ask again right away) or its network dropped. No cool-down,
+                // so asking again works at once; the game PC never asks again on its own.
+                answer = Answer.Withdrawn;
+                Log.Info(I18n.T("receive.withdrawn", ("name", name)));
             }
             else
             {
-                Log.Info(I18n.T(request.Decided.IsSet ? "receive.denied" : "receive.expired", ("name", name)));
+                answer = Answer.Denied;
+                Log.Info(I18n.T(decided ? "receive.denied" : "receive.expired", ("name", name)));
                 lock (gate) deniedUntil[peerId + "@" + address] = DateTime.UtcNow.AddMilliseconds(DenyCooldownMs);
             }
             changed();
-            return approved;
+            return answer;
         }
 
         private bool IsCoolingDown(string peerId, string address)

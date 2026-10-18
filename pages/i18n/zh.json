@@ -57,6 +57,7 @@
   "firewall.timeout": "防火墙设置没有完成。",
   "firewall.failed": "无法添加防火墙规则。",
   "firewall.uacCancelled": "管理员权限请求 (UAC) 已被取消。",
+  "firewall.startFailed": "无法启动防火墙设置 ({error})。",
 
   "relay.banner": "  双机 (本机名称：{machine})",
   "relay.receiveOn": "    用作直播电脑：已开启接收游戏电脑输入",
@@ -78,12 +79,14 @@
   "receive.portFailed": "  无法打开双机端口 {port}: {error}",
   "receive.on": "  已开启接收。在游戏电脑上运行 KbmOverlay 就能找到本机 ({machine})。",
   "receive.error": "处理游戏电脑连接时出错：{error}",
+  "receive.startError": "开启接收时出错：{error}",
   "receive.request1": "  游戏电脑 '{name}' ({address}) 想把它的键盘和鼠标输入发送到本机。",
   "receive.request2": "  确认码：{code}  (与游戏电脑上显示的确认码相同时才允许)",
   "receive.request3": "  按 Y 允许，按 N 拒绝。也可以在设置页面中选择。",
   "receive.allowed": "  已允许 '{name}'。以后连接时不再询问。",
   "receive.denied": "  已拒绝 '{name}' 的请求。",
   "receive.expired": "  '{name}' 的请求因无人响应而过期。",
+  "receive.withdrawn": "  游戏电脑 '{name}' 已取消请求或已断开。",
   "receive.connected": "  游戏电脑 '{name}' ({address}) 已连接。叠加层现在显示游戏电脑的输入。",
   "receive.disconnected": "  游戏电脑 '{name}' 已断开。重新连接前将显示本机的输入。",
 

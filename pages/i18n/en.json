@@ -57,6 +57,7 @@
   "firewall.timeout": "The firewall setup did not finish.",
   "firewall.failed": "Could not add the firewall rules.",
   "firewall.uacCancelled": "The administrator (UAC) prompt was cancelled.",
+  "firewall.startFailed": "Could not start the firewall setup ({error}).",
 
   "relay.banner": "  Two PCs (this PC: {machine})",
   "relay.receiveOn": "    Streaming PC: receiving from game PCs is on",
@@ -78,12 +79,14 @@
   "receive.portFailed": "  Cannot open the two-PC port {port}: {error}",
   "receive.on": "  Receiving from game PCs is on. A game PC running KbmOverlay will find this PC ({machine}).",
   "receive.error": "Error while handling a game PC connection: {error}",
+  "receive.startError": "Error while turning on receiving: {error}",
   "receive.request1": "  Game PC '{name}' ({address}) wants to send its keyboard and mouse input to this PC.",
   "receive.request2": "  Code: {code}  (allow only if it matches the code on the game PC)",
   "receive.request3": "  Press Y to allow or N to deny. You can also choose on the settings page.",
   "receive.allowed": "  Allowed '{name}'. It will connect without asking from now on.",
   "receive.denied": "  Denied the request from '{name}'.",
   "receive.expired": "  The request from '{name}' expired without an answer.",
+  "receive.withdrawn": "  Game PC '{name}' cancelled the request or disconnected.",
   "receive.connected": "  Game PC '{name}' ({address}) connected. The overlays now show the game PC's input.",
   "receive.disconnected": "  Game PC '{name}' disconnected. Showing this PC's input until it reconnects.",
 

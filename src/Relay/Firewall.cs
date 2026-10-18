@@ -121,6 +121,7 @@ namespace KbmOverlay.Relay
             {
                 using (Process process = Process.Start(info))
                 {
+                    if (process == null) return I18n.T("firewall.failed");
                     if (!process.WaitForExit(60000)) return I18n.T("firewall.timeout");
                     return process.ExitCode == 0 ? null : I18n.T("firewall.failed");
                 }
@@ -128,6 +129,11 @@ namespace KbmOverlay.Relay
             catch (Win32Exception e) when (e.NativeErrorCode == 1223)
             {
                 return I18n.T("firewall.uacCancelled");
+            }
+            catch (Win32Exception e)
+            {
+                // For example the exe was moved or renamed while running, or a policy blocks elevation.
+                return I18n.T("firewall.startFailed", ("error", e.Message));
             }
         }
 
