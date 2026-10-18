@@ -200,6 +200,10 @@
         </div>
         <nav>
             <div class="nav-group" data-i18n="nav.overlays"></div>
+            <a href="#combo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="8" width="12" height="9" rx="1.5"/><path d="M4.5 11h.01M7.5 11h.01M10.5 11h.01M5 14h5"/><rect x="16" y="5.5" width="6.5" height="12" rx="3.25"/><path d="M19.25 8.5v2"/></svg>
+                <span data-i18n="combo.title"></span>
+            </a>
             <a href="#keyboard">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6.5 10h1M10.5 10h1M14.5 10h1M8 14h8"/></svg>
                 <span data-i18n="keyboard.title"></span>
@@ -278,6 +282,85 @@
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
             </button>
         </div>
+
+        <section class="panel" data-panel="combo" data-page="combo.html" data-colors="pressed released glow line" hidden>
+            <h2 data-i18n="combo.title"></h2>
+            <p class="muted intro" data-i18n="combo.intro"></p>
+            <div class="preview"><iframe data-i18n-title="preview.combo"></iframe></div>
+            <!-- Shown when the layout is "Pick keys": combo.html?keys=... (its own keys, apart from the keyboard's) -->
+            <div class="box picker" data-store="comboPickedKeys" hidden>
+                <h3 data-i18n="picker.title"></h3>
+                <p class="muted small" data-i18n="picker.intro"></p>
+                <div class="picker-tools">
+                    <button type="button" class="secondary pick-listen" aria-pressed="false" data-i18n="picker.listen"></button>
+                    <button type="button" class="secondary" data-pick="wasd" data-i18n="picker.wasd"></button>
+                    <button type="button" class="secondary" data-pick="all" data-i18n="picker.all"></button>
+                    <button type="button" class="secondary" data-pick="none" data-i18n="picker.none"></button>
+                    <span class="pick-count"></span>
+                </div>
+                <div class="pick-board" role="group" data-i18n-aria="picker.title"></div>
+                <p class="pick-note small muted" aria-live="polite"></p>
+            </div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="keyboard.layout"></span>
+                        <select data-param="layout">
+                            <option value="" data-i18n="layout.wasd"></option>
+                            <option value="tkl" data-i18n="layout.tkl"></option>
+                            <option value="full" data-i18n="layout.full"></option>
+                            <option value="pick" data-i18n="layout.pick"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="combo.moveStyle"></span>
+                        <select data-param="style">
+                            <option value="" data-i18n="moveStyle.ring"></option>
+                            <option value="arrow" data-i18n="moveStyle.arrow"></option>
+                            <option value="trail" data-i18n="moveStyle.trail"></option>
+                            <option value="none" data-i18n="moveStyle.none"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="combo.sens"></span>
+                        <input type="number" data-param="sens" min="0.05" max="20" step="0.25" placeholder="1">
+                    </label>
+                    <label class="field"><span data-i18n="option.scale"></span>
+                        <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
+                    </label>
+                    <label class="field"><span data-i18n="look.press"></span>
+                        <select data-param="press">
+                            <option value="" data-i18n="press.none"></option>
+                            <option value="sink" data-i18n="press.sink"></option>
+                            <option value="pop" data-i18n="press.pop"></option>
+                            <option value="ripple" data-i18n="press.ripple"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="keyboard.presses"></span>
+                        <select data-param="presses">
+                            <option value="" data-i18n="presses.none"></option>
+                            <option value="heat" data-i18n="presses.heat"></option>
+                            <option value="count" data-i18n="presses.count"></option>
+                            <option value="both" data-i18n="presses.both"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="keyboard.reset"></span>
+                        <select data-param="reset">
+                            <option value="" data-i18n="reset.never"></option>
+                            <option value="10" data-i18n="reset.10"></option>
+                            <option value="30" data-i18n="reset.30"></option>
+                            <option value="60" data-i18n="reset.60"></option>
+                            <option value="300" data-i18n="reset.300"></option>
+                        </select>
+                    </label>
+                    <div class="slider" data-slider="fade" data-var="--key-release-time" data-format="seconds" data-max="2" data-step="0.05" data-label="look.fade"></div>
+                    <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
+                    <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
+                    <div class="slider" data-slider="idle" data-var="--idle-opacity" data-format="opacity" data-max="1" data-step="0.05" data-label="look.idle"></div>
+                    <p class="muted small" data-i18n="combo.hint"></p>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
 
         <section class="panel" data-panel="keyboard" data-page="keyboard.html" data-colors="pressed released glow line" hidden>
             <h2 data-i18n="keyboard.title"></h2>
@@ -717,15 +800,16 @@
 
         // ---- keyboard layouts added to the pages folder (layouts/name.json), listed before "Pick keys" ----
 
-        var layoutMenu = document.querySelector('[data-panel="keyboard"] select[data-param="layout"]');
-        (info.layouts || []).forEach(function (name) {
-            var known = Array.prototype.some.call(layoutMenu.options, function (option) {
-                return (option.value || 'wasd').toLowerCase() === name.toLowerCase();
+        Array.prototype.forEach.call(document.querySelectorAll('select[data-param="layout"]'), function (layoutMenu) {
+            (info.layouts || []).forEach(function (name) {
+                var known = Array.prototype.some.call(layoutMenu.options, function (option) {
+                    return (option.value || 'wasd').toLowerCase() === name.toLowerCase();
+                });
+                if (known) return;
+                var option = el('option', null, name);
+                option.value = name;
+                layoutMenu.insertBefore(option, layoutMenu.querySelector('option[value="pick"]'));
             });
-            if (known) return;
-            var option = el('option', null, name);
-            option.value = name;
-            layoutMenu.insertBefore(option, layoutMenu.querySelector('option[value="pick"]'));
         });
 
         // ---- language ----
@@ -982,13 +1066,15 @@
             'LeftCtrl', 'LeftAlt', 'Space']; // the keys of layouts/wasd.json, picked at first
         var keyListeners = []; // called with (name, down) for every key KbmOverlay reports
 
-        // Fills the picker box. onChange runs whenever the picked keys change.
+        // Fills the picker box. onChange runs whenever the picked keys change. The keys are remembered under
+        // the box's data-store name; the keyboard's have no name and stay under pickedKeys, as before.
         function keyPicker(box, onChange) {
             var board = box.querySelector('.pick-board');
             var count = box.querySelector('.pick-count');
             var listenButton = box.querySelector('.pick-listen');
             var note = box.querySelector('.pick-note');
-            var saved = store.get('pickedKeys');
+            var storeName = box.getAttribute('data-store') || 'pickedKeys';
+            var saved = store.get(storeName);
             var order = Array.isArray(saved) ? saved.filter(function (name) { return typeof name === 'string'; }) : WASD_KEYS.slice();
             var picked = {};
             var buttons = {};
@@ -1009,7 +1095,7 @@
             }
 
             function changed() {
-                store.set('pickedKeys', keys());
+                store.set(storeName, keys());
                 render();
                 onChange();
             }
@@ -1509,9 +1595,10 @@
         var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
         var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
 
+        // Someone new starts on the combined overlay: copy, paste into OBS, done.
         function showPanel(name) {
             var known = panels.some(function (panel) { return panel.getAttribute('data-panel') === name; });
-            if (!known) name = 'keyboard';
+            if (!known) name = 'combo';
             panels.forEach(function (panel) { panel.hidden = panel.getAttribute('data-panel') !== name; });
             links.forEach(function (link) {
                 if (link.getAttribute('href') === '#' + name) link.setAttribute('aria-current', 'page');

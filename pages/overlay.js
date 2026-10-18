@@ -151,6 +151,12 @@
         reportSize(Math.max(320, div.offsetWidth), div.offsetHeight);
     }
 
+    // A promise that fails with a translated message, for a part that cannot start (keyboard.js, mouse.js).
+    // text(t) gives the message; the page shows it with showError.
+    function fail(text) {
+        return i18n().then(function (t) { throw new Error(text(t)); });
+    }
+
     // ---- translations ----
     // Same files as the console (pages/i18n/<code>.json). The language is ?lang=, else the one
     // KbmOverlay uses (info.json), else English. Missing keys fall back to English.
@@ -337,6 +343,7 @@
         connect: connect,
         reportSize: reportSize,
         showError: showError,
+        fail: fail,
         i18n: i18n,
         translate: translate
     };

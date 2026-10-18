@@ -16,6 +16,8 @@
     /* --glow-size: 1; */             /* 0 = no glow, 2 = twice as wide */
     /* --key-radius: 10px; */         /* key corners */
     /* --idle-opacity: 1; */          /* keys and mouse while not pressed: 0 = hidden until pressed */
+    /* --ring-idle: 0.35; */          /* mouse movement ring while the mouse is still: 0 = hidden
+                                         (built in: 0.35 on Keyboard + mouse, 0 on Mouse movement) */
     /* --key-release-time: 0.5s; */   /* fade after release, keyboard */
     /* --mouse-release-time: 0.25s; */ /* fade after release, mouse */
     /* --ripple: #2DA026; */          /* ring of the ripple press effect */

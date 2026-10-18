@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Keyboard + mouse</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="overlay.js"></script>
+    <script src="keyboard.js"></script>
+    <script src="mouse.js"></script>
+    <script src="mouse-move.js"></script>
+    <style>
+        :root { --ring-idle: 0.35; } /* the ring shows faintly around the still mouse (times ?idle=) */
+        #combo { display: flex; align-items: center; width: max-content; transform-origin: 0 0; }
+        #mouse-area { position: relative; flex-shrink: 0; }
+        #moves { position: absolute; left: 0; top: 0; }
+        #mouse { padding: 12px; }
+        #mouse svg { display: block; width: 200px; height: auto; overflow: visible; }
+        /* With the ring, the mouse sits in its middle. */
+        .ring #mouse { position: absolute; left: 50%; top: 50%; padding: 0; transform: translate(-50%, -50%); }
+    </style>
+    <link rel="stylesheet" href="custom.css"> <!-- your own look, last so it wins (see custom.css) -->
+</head>
+<body>
+    <div id="combo">
+        <div class="board" id="board"></div>
+        <div id="mouse-area">
+            <div id="moves"></div>
+            <div id="mouse"></div>
+        </div>
+    </div>
+    <script>
+        // The keyboard, and the mouse with the movement ring around it, in one OBS source.
+        // combo.html takes the options of keyboard.html (layout, keys, presses, reset; see keyboard.js),
+        // ?style=ring (default) | arrow | trail | none for the mouse movement and ?sens= (see mouse-move.js),
+        // ?scale=1.5, and the colors and look of every overlay (see overlay.js).
+        (function () {
+            'use strict';
+
+            var RING = 1.3; // ring width and height per px of mouse picture height
+
+            var combo = document.getElementById('combo');
+            var area = document.getElementById('mouse-area');
+            var holder = document.getElementById('mouse');
+            var style = Overlay.params.get('style');
+            var showMoves = style !== 'none';
+            if (showMoves) area.classList.add('ring');
+
+            Promise.all([Overlay.keyboard(document.getElementById('board')), Overlay.mouse(holder)]).then(function (parts) {
+                var keyboard = parts[0], mouse = parts[1];
+                var moves = null;
+                if (showMoves) {
+                    // Around the picture, so a mouse made bigger in custom.css still fits. The picture is
+                    // not measured while the page is not shown (0); the settings page loads it again then.
+                    var size = Math.round(Math.max(mouse.width, mouse.height) * RING) || 400;
+                    area.style.width = area.style.height = size + 'px';
+                    moves = Overlay.mouseMove(document.getElementById('moves'), size);
+                }
+
+                var scale = Overlay.number('scale', 1, 0.25, 4);
+                combo.style.transform = 'scale(' + scale + ')';
+                Overlay.reportSize(combo.offsetWidth * scale, combo.offsetHeight * scale);
+
+                var connection = Overlay.connect(showMoves ? ['key', 'button', 'wheel', 'move'] : ['key', 'button', 'wheel'])
+                    .on('key', keyboard.key)
+                    .on('button', mouse.button)
+                    .on('wheel', mouse.wheel);
+                if (moves) connection.on('move', moves.move);
+            }, function (error) {
+                combo.style.display = 'none'; // no half-drawn overlay behind the message
+                Overlay.showError(error.message);
+            });
+        })();
+    </script>
+</body>
+</html>

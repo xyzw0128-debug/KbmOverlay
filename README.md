@@ -22,6 +22,7 @@ KbmOverlay shows your keyboard and mouse input in OBS as browser sources. It wor
    Choose **More info → Run anyway**.
 2. The settings page (`http://localhost:5520/`) opens in your browser. If you closed it, press **Enter** in
    KbmOverlay's window. It has the URLs to copy, the sizes to use in OBS, and live previews.
+   It starts on **Keyboard + mouse**: the keyboard, and the mouse with a movement ring around it, in one OBS source.
 3. In OBS, under **Sources**, press **+** → **Browser**, and paste a copied URL into **URL**.
    Set **Width** and **Height** to the numbers on the settings page. Leave "Local file" unchecked.
 
@@ -73,6 +74,7 @@ streaming PC only *receives* input, and nobody can connect without you allowing 
 
 | URL | Shows | Options |
 |---|---|---|
+| `http://localhost:5520/combo.html` | Keyboard, and the mouse with the movement ring around it, in one source | The keyboard's options (`layout`, `keys`, `presses`, `reset`); `style=ring` (default), `arrow`, `trail`, `none` (no movement); `sens=1`; `scale=1.5` |
 | `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full` or [your own](#editing-the-files); `keys=KeyW,KeyA,…` (only these keys); `presses=heat`, `count`, `both` (how often each key was pressed) with `reset=60` (start again after that many seconds without a key); `scale=1.5` |
 | `http://localhost:5520/mouse.html` | Mouse buttons and wheel | `scale=1.5` |
 | `http://localhost:5520/mouse-move.html` | The mouse's direction and speed | `size=400` (px), `sens=1` (sensitivity); `style=ring` (default), `arrow`, `trail` |
@@ -84,10 +86,10 @@ Add options after `?` and join them with `&`, e.g. `keyboard.html?layout=full&sc
 Add `bg=1` to any page to give it a background, which makes it easier to check in a normal browser.
 
 Every page also takes colors, as 6 hex digits without `#`: `pressed` (held), `released` (start of the fade),
-`glow` (keyboard only) and `line` (outline), e.g. `keyboard.html?pressed=1F6FEB&line=FFCC00`.
-The keyboard and mouse also take `fade` (seconds the fade after release lasts, `0` = none), `glowsize` (`1` = normal,
+`glow` (keyboard and combo only) and `line` (outline), e.g. `keyboard.html?pressed=1F6FEB&line=FFCC00`.
+The keyboard, the mouse and the combo also take `fade` (seconds the fade after release lasts, `0` = none), `glowsize` (`1` = normal,
 `0` = no glow), `idle` (how much shows while not pressed, `1` = normal, `0` = only while pressed), `press` (press
-effect: `sink`, `pop` or `ripple`) and, keyboard only, `round` (key corner in px).
+effect: `sink`, `pop` or `ripple`) and, for the keys, `round` (key corner in px).
 
 You don't need to type any of this: everything in [Customizing](#customizing) is set on the settings page, which
 builds the URL. Changes there do not change sources already in OBS; copy the URL again and replace it in the source.
@@ -116,6 +118,10 @@ The Japanese and Chinese translations were not written by native speakers; corre
 Everything is on the settings page. Your choices go into the overlay URL, so each OBS source can look different, and
 the preview shows the result right away.
 
+- **Keyboard and mouse in one source:** **Keyboard + mouse**, at the top of the menu. It has the keyboard's options
+  (layout, picked keys, press counts) and the mouse movement as a **Ring** around the mouse, an **Arrow**, a **Trail**
+  or **Off**. The ring shows faintly while the mouse is still, as much as **Shown while not pressed** allows.
+  To place the keyboard and the mouse apart, use their own menu items instead.
 - **Colors:** the **Colors** box (presets, or a picker per color). The same colors go into every overlay's URL.
 - **Fade after release, glow size, rounded corners, shown while not pressed:** the sliders under **Options** for the
   keyboard and the mouse. **Default** next to a slider puts it back. Set **Shown while not pressed** to **Hidden** (0%)
@@ -133,7 +139,8 @@ the preview shows the result right away.
   box of keys). When you stop adding, the lanes go in keyboard order, left to right, with the mouse buttons last.
 - **Preview background:** the circles at the top right of each preview: see-through like OBS, black, gray, white or
   any color. It only changes the preview, to check effects more easily; it is not part of the URL.
-- **Which keys the keyboard shows:** set **Layout** to **Pick keys**. A full keyboard appears; click a key to turn it
+- **Which keys the keyboard shows:** set **Layout** to **Pick keys** (on **Keyboard** or **Keyboard + mouse**, each
+  with its own keys). A full keyboard appears; click a key to turn it
   on or off. **Add by pressing** adds every key you press on your real keyboard until you press the button again or
   switch to another window. **Around WASD**, **All** and **Clear** are quick starts.
   The keys keep their places from a full-size keyboard, and empty rows between them are left out.

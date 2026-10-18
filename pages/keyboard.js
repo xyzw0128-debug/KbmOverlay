@@ -1,0 +1,182 @@
+// Draws the keyboard for keyboard.html and combo.html.
+//
+//   Overlay.keyboard(board).then(function (keyboard) {
+//       // keyboard.width, keyboard.height: px of the board, before ?scale=
+//       connection.on('key', keyboard.key);
+//   }, function (error) { Overlay.showError(error.message); });
+//
+// board is an empty <div class="board">. Options from the URL:
+//   ?layout=wasd|tkl|full (a file in layouts/)
+//   ?keys=KeyW,KeyA,KeyS,KeyD,Space shows only those keys, placed as on the full-size layout (or on ?layout=
+//   when given). The settings page builds this list.
+//   ?presses=heat|count|both: how often each key was pressed since the page started, as a tint (more presses,
+//   more --heat color) and/or a number in the key's corner. &reset=60 starts the counts again after that many
+//   seconds without a key press.
+// The layout file format is described in overlay.js.
+(function () {
+    'use strict';
+
+    var UNIT = 48;   // px from one key to the next
+    var GAP = 4;     // px between keys
+    var PAD = Overlay.press === 'ripple' ? 18 : 12;   // px around the board, room for the glow (and ripples)
+
+    function fitFont(label, width, height) {
+        var size = Math.min(20, height * 0.55);
+        var estimated = label.length * size * 0.55;   // rough Calibri glyph width
+        if (estimated > width - 10) size = Math.max(10, (width - 10) / (label.length * 0.55));
+        return Math.floor(size);
+    }
+
+    function build(board, layout, picked) {
+        var elements = {};
+        var right = 0, bottom = 0;
+
+        var keys = Overlay.layoutKeys(layout);
+        if (picked) keys = Overlay.pickKeys(keys, picked);
+        if (!keys.length) return Overlay.fail(function (t) { return t('overlay.noKeys'); });
+
+        keys.forEach(function (key) {
+            var width = key.w * UNIT - GAP;
+            var height = key.h * UNIT - GAP;
+            var el = document.createElement('div');
+            el.className = 'key';
+            el.style.left = (PAD + key.x * UNIT) + 'px';
+            el.style.top = (PAD + key.y * UNIT) + 'px';
+            el.style.width = width + 'px';
+            el.style.height = height + 'px';
+            el.style.fontSize = (key.font || fitFont(key.label, width, height)) + 'px';
+            el.style.setProperty('--size', Math.max(width, height)); // for the press effects in theme.css
+            el.textContent = key.label;
+            board.appendChild(el);
+            (elements[key.name] = elements[key.name] || []).push(el);
+            right = Math.max(right, key.x + key.w);
+            bottom = Math.max(bottom, key.y + key.h);
+        });
+
+        var boardWidth = PAD * 2 + right * UNIT - GAP;
+        var boardHeight = PAD * 2 + bottom * UNIT - GAP;
+        board.style.width = boardWidth + 'px';
+        board.style.height = boardHeight + 'px';
+
+        // The fade and the ripples end by timers too (see Overlay.duration).
+        var releaseTime = Overlay.duration('--key-release-time') + 100;
+        var rippleTime = Overlay.duration('--ripple-time') + 100;
+
+        // ?press=ripple: a ring the shape of the key spreads out from it (.ripple in theme.css).
+        function ripple(el) {
+            var ring = document.createElement('div');
+            ring.className = 'ripple';
+            ring.style.left = el.style.left;
+            ring.style.top = el.style.top;
+            ring.style.width = el.style.width;
+            ring.style.height = el.style.height;
+            board.appendChild(ring);
+            setTimeout(function () { board.removeChild(ring); }, rippleTime);
+        }
+
+        // ?presses=: counts per key name, shown as a tint relative to the most pressed key and/or a number.
+        var presses = Overlay.params.get('presses') || '';
+        var showHeat = presses === 'heat' || presses === 'both';
+        var showCount = presses === 'count' || presses === 'both';
+        var counts = {}, most = 0;
+        var heat = null;
+        if (showHeat) {
+            var probe = document.createElement('div');
+            probe.style.color = 'var(--heat)';
+            document.body.appendChild(probe);
+            heat = (getComputedStyle(probe).color.match(/[\d.]+/g) || [229, 72, 77]).slice(0, 3).join(', ');
+            document.body.removeChild(probe);
+        }
+
+        function showPresses(name) {
+            (elements[name] || []).forEach(function (el) {
+                if (showHeat) {
+                    var alpha = (0.1 + 0.6 * counts[name] / most).toFixed(3);
+                    el.style.backgroundImage = 'linear-gradient(rgba(' + heat + ', ' + alpha + '), rgba(' + heat + ', ' + alpha + '))';
+                }
+                if (showCount) {
+                    if (!el.presses) {
+                        el.presses = document.createElement('span');
+                        el.presses.className = 'presses';
+                        el.appendChild(el.presses);
+                    }
+                    el.presses.textContent = counts[name];
+                }
+            });
+        }
+
+        // ?reset=: after that many seconds without a key press, every count goes back to nothing.
+        var RESET = Overlay.number('reset', 0, 0, 86400) * 1000;
+        var resetTimer = null;
+        function resetCounts() {
+            counts = {};
+            most = 0;
+            Object.keys(elements).forEach(function (name) {
+                elements[name].forEach(function (el) {
+                    el.style.backgroundImage = '';
+                    if (el.presses) {
+                        el.removeChild(el.presses);
+                        el.presses = null;
+                    }
+                });
+            });
+        }
+
+        function count(name) {
+            counts[name] = (counts[name] || 0) + 1;
+            if (counts[name] > most) {
+                most = counts[name];
+                if (showHeat) {
+                    Object.keys(counts).forEach(showPresses); // every tint is relative to the most pressed key
+                    return;
+                }
+            }
+            showPresses(name);
+        }
+
+        function key(name, down) {
+            if (down && presses) {
+                if (elements[name]) count(name);
+                if (RESET) {
+                    clearTimeout(resetTimer);
+                    resetTimer = setTimeout(resetCounts, RESET);
+                }
+            }
+            (elements[name] || []).forEach(function (el) {
+                if (down) {
+                    el.classList.remove('released');
+                    el.classList.add('pressed');
+                    if (Overlay.press === 'ripple') ripple(el);
+                } else {
+                    el.classList.remove('pressed');
+                    void el.offsetWidth; // restart the fade when a key is tapped twice quickly
+                    el.classList.add('released');
+                    clearTimeout(el.fadeTimer);
+                    el.fadeTimer = setTimeout(function () { el.classList.remove('released'); }, releaseTime);
+                }
+            });
+        }
+
+        return { width: boardWidth, height: boardHeight, key: key };
+    }
+
+    Overlay.keyboard = function (board) {
+        var picked = Overlay.params.has('keys')
+            ? Overlay.params.get('keys').split(',').map(function (name) { return name.trim(); }).filter(Boolean)
+            : null;
+        var name = (Overlay.params.get('layout') || (picked ? 'full' : 'wasd')).replace(/[^A-Za-z0-9_-]/g, '');
+        var missing = false;
+        return fetch('layouts/' + name + '.json')
+            .then(function (response) {
+                missing = !response.ok;
+                if (missing) throw new Error(name);
+                return response.json();
+            })
+            .catch(function (error) {
+                return Overlay.fail(function (t) {
+                    return t('overlay.layoutFailed') + '\n' + (missing ? t('overlay.layoutMissing', { name: name }) : error.message);
+                });
+            })
+            .then(function (layout) { return build(board, layout, picked); });
+    };
+})();

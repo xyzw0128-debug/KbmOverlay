@@ -19,6 +19,7 @@
     --key-release-time: 0.5s;   /* fade after release (?fade= on keyboard.html) */
     --mouse-release-time: 0.25s; /* (?fade= on mouse.html) */
     --scroll-time: 0.25s;
+    --ring-idle: 0;             /* mouse movement ring while the mouse is still, times --idle-opacity: 0 = hidden (combo.html: 0.35) */
     --ripple: var(--pressed);   /* ring of ?press=ripple */
     --ripple-time: 0.45s;
     --heat: #E5484D;            /* most pressed key with keyboard.html?presses=heat */
@@ -190,6 +191,18 @@ html, body {
 @keyframes scroll-down {
     from { opacity: 1; transform: translate(0, 0); }
     to { opacity: 0; transform: translate(0, 10px); }
+}
+
+/* ---- mouse movement ring (mouse-move.html, combo.html) ----
+ * Each segment lights up with a color from mouse-move.js; the outline follows --line.
+ * While the mouse is still, the ring shows as much as --ring-idle says. */
+
+.segment {
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--line);
+    opacity: calc(var(--ring-idle) * var(--idle-opacity));
 }
 
 /* ---- shown when a page cannot start (e.g. unknown layout) ---- */

@@ -229,6 +229,7 @@ namespace KbmOverlay
             Log.Info(T("banner.settingsHint"));
             Log.Info("");
             Log.Info(T("banner.urls"));
+            Url(root + "combo.html", T("overlay.combo"));
             Url(root + "keyboard.html", T("overlay.keyboardWasd"));
             Url(root + "keyboard.html?layout=tkl", T("overlay.keyboardTkl"));
             Url(root + "keyboard.html?layout=full", T("overlay.keyboardFull"));
