@@ -252,8 +252,12 @@
         NumPeriod: '.', NumEnter: 'Enter'
     };
 
+    var BUTTON_LABELS = { Mouse1: 'LMB', Mouse2: 'RMB', Mouse3: 'MMB', Mouse4: 'M4', Mouse5: 'M5' };
+
+    // Short label of a key or mouse button name, as on a keycap.
     function keyLabel(name) {
         if (LABELS.hasOwnProperty(name)) return LABELS[name];
+        if (BUTTON_LABELS.hasOwnProperty(name)) return BUTTON_LABELS[name];
         if (/^Key[A-Z0-9]$/.test(name)) return name.slice(3);
         if (/^Num[0-9]$/.test(name)) return name.slice(3);
         return name;
@@ -327,6 +331,7 @@
         press: press,
         duration: duration,
         number: number,
+        keyLabel: keyLabel,
         layoutKeys: layoutKeys,
         pickKeys: pickKeys,
         connect: connect,

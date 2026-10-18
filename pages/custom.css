@@ -20,5 +20,7 @@
     /* --mouse-release-time: 0.25s; */ /* fade after release, mouse */
     /* --ripple: #2DA026; */          /* ring of the ripple press effect */
     /* --ripple-time: 0.45s; */
+    /* --heat: #E5484D; */            /* most pressed key with the keyboard's heatmap */
+    /* --history-background: rgba(0, 0, 0, 0.45); */ /* behind each line of the key history */
     /* --font: Calibri, "Malgun Gothic", sans-serif; */
 }

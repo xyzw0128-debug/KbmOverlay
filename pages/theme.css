@@ -21,6 +21,8 @@
     --scroll-time: 0.25s;
     --ripple: var(--pressed);   /* ring of ?press=ripple */
     --ripple-time: 0.45s;
+    --heat: #E5484D;            /* most pressed key with keyboard.html?presses=heat */
+    --history-background: rgba(0, 0, 0, 0.45); /* behind each line of history.html */
     --font: Calibri, "Malgun Gothic", "Yu Gothic UI", "Microsoft YaHei UI", "Segoe UI", sans-serif;
 }
 
@@ -69,6 +71,20 @@ html, body {
 @keyframes key-released {
     from { background-color: var(--released); opacity: 1; }
     to { background-color: transparent; opacity: var(--idle-opacity); }
+}
+
+/* ?presses=heat: keyboard.html tints each key by how often it was pressed (background-image), hidden while held */
+.key.pressed {
+    background-image: none !important;
+}
+
+/* ?presses=count: how often each key was pressed, in its corner */
+.key .presses {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    font-size: 10px;
+    opacity: 0.75;
 }
 
 /* ?press=ripple: a ring that spreads out from the key (keyboard.html adds one per press) */

@@ -234,6 +234,9 @@ namespace KbmOverlay
             Url(root + "keyboard.html?layout=full", T("overlay.keyboardFull"));
             Url(root + "mouse.html", T("overlay.mouse"));
             Url(root + "mouse-move.html", T("overlay.mouseMove"));
+            Url(root + "counter.html", T("overlay.counter"));
+            Url(root + "history.html", T("overlay.history"));
+            Url(root + "bars.html", T("overlay.bars"));
             Log.Info("");
             foreach (string line in relay.Describe()) Log.Info(line);
             Log.Info("");

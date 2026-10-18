@@ -73,9 +73,12 @@ streaming PC only *receives* input, and nobody can connect without you allowing 
 
 | URL | Shows | Options |
 |---|---|---|
-| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full` or [your own](#editing-the-files); `keys=KeyW,KeyA,…` (only these keys); `scale=1.5` |
+| `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full` or [your own](#editing-the-files); `keys=KeyW,KeyA,…` (only these keys); `presses=heat`, `count`, `both` (how often each key was pressed) with `reset=60` (start again after that many seconds without a key); `scale=1.5` |
 | `http://localhost:5520/mouse.html` | Mouse buttons and wheel | `scale=1.5` |
 | `http://localhost:5520/mouse-move.html` | The mouse's direction and speed | `size=400` (px), `sens=1` (sensitivity); `style=ring` (default), `arrow`, `trail` |
+| `http://localhost:5520/counter.html` | Presses in the last second | `show=` (KPS and CPS), `kps`, `cps`, `lr` (left and right button CPS); `scale=1.5` |
+| `http://localhost:5520/history.html` | Keys as they are pressed (`Ctrl + C`, `W ×5`) | `max=5` (lines), `time=3` (seconds), `width=360` (px), `align=left`, `center`, `right`; `only=combos` (only keys pressed with Ctrl, Alt or Win); `scale=1.5` |
+| `http://localhost:5520/bars.html` | Rhythm-game style bars that grow while a key is held and move away | `keys=KeyZ,KeyX` (keys and mouse buttons, up to 10), `dir=up` or `right`, `speed=500` (px per second), `length=400` (px), `counts=0` (no press counts); `scale=1.5` |
 
 Add options after `?` and join them with `&`, e.g. `keyboard.html?layout=full&scale=0.8`.
 Add `bg=1` to any page to give it a background, which makes it easier to check in a normal browser.
@@ -121,6 +124,13 @@ the preview shows the result right away.
 - **Mouse movement style:** under **Style** in the **Mouse movement** options: a **Ring** that lights up in the
   direction moved, an **Arrow** that gets longer and redder the faster the mouse moves, or a **Trail** of the path just
   moved, fading out.
+- **Press counts on the keyboard:** **Press counts** in the keyboard options: a **Heatmap** that tints the keys pressed
+  more often redder, **Numbers** in the corner of each key, or both. They count from when the source started, or,
+  with **Start counting again**, from the last time no key was pressed for that long.
+- **Counter, Key history, Bars:** their own menu items, each with its options. Key history shows what you type, so
+  hide it while typing passwords, or set **Keys shown** to **Only with Ctrl, Alt or Win**. For the bars, **Custom**
+  under **Keys** takes any keys and mouse buttons: press **Add by pressing**, then the keys (mouse buttons inside the
+  box of keys). When you stop adding, the lanes go in keyboard order, left to right, with the mouse buttons last.
 - **Preview background:** the circles at the top right of each preview: see-through like OBS, black, gray, white or
   any color. It only changes the preview, to check effects more easily; it is not part of the URL.
 - **Which keys the keyboard shows:** set **Layout** to **Pick keys**. A full keyboard appears; click a key to turn it
@@ -228,6 +238,7 @@ KbmOverlay handles key input, so here is exactly what it does and does not do.
   Delete that folder after removing KbmOverlay and nothing is left.
 - The settings page remembers the menu, options, colors and keyboard keys you picked and the URLs you last copied in
   that browser (local storage for `localhost:5520`). No key input goes there; picked keys are only a list of key names.
+  **Reset all settings** under **About** forgets all of it.
 - With two PCs, other KbmOverlay instances on the same network can see this PC's **computer name** (e.g.
   `DESKTOP-ABC123`) and its random ID. While receiving is on, so can any KbmOverlay on the network that is looking
   for a streaming PC.

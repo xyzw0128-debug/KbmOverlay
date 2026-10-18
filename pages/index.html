@@ -137,6 +137,18 @@
         button.pick-key[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
         button.pick-key.flash { outline: 2px solid var(--warn); outline-offset: 1px; }
         .pick-note { min-height: 1.55em; margin-top: 10px; }
+
+        /* ---- the bars' own keys ---- */
+        .lane-keys { margin: -4px 0 12px; }
+        .lane-keys .row { margin-top: 8px; }
+        .lane-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 40px; padding: 6px;
+                      border: 1px dashed var(--line); border-radius: 8px; }
+        .lane-chips.listening { border-color: var(--warn); cursor: crosshair; }
+        .lane-chip { display: inline-flex; align-items: center; gap: 2px; padding: 2px 2px 2px 9px; border: 1px solid var(--line);
+                     border-radius: 6px; background: var(--bg); color: var(--text); font-size: 13px; }
+        .lane-chip button { padding: 0 6px; background: none; color: var(--muted); font-size: 15px; line-height: 1.4; }
+        .lane-chip button:hover { color: var(--text); }
+        .lane-note { min-height: 1.55em; margin-top: 6px; }
         .panel > .box + .box { margin-top: 14px; }
 
         /* ---- two PCs ---- */
@@ -192,6 +204,18 @@
             <a href="#mouse-move">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 12l4.5-4.5M13 7.5h3.5V11"/></svg>
                 <span data-i18n="mouseMove.title"></span>
+            </a>
+            <a href="#counter">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19h16M7 16v-5M12 16V6M17 16V9"/></svg>
+                <span data-i18n="counter.title"></span>
+            </a>
+            <a href="#history">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="4.5" rx="1.5"/><rect x="3.5" y="10.5" width="12" height="4.5" rx="1.5"/><rect x="3.5" y="16.5" width="8" height="3.5" rx="1.5"/></svg>
+                <span data-i18n="history.title"></span>
+            </a>
+            <a href="#bars">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="16" width="6" height="4.5" rx="1"/><rect x="13.5" y="16" width="6" height="4.5" rx="1"/><path d="M7.5 13V5M16.5 13V9"/></svg>
+                <span data-i18n="bars.title"></span>
             </a>
             <div class="nav-group" data-i18n="nav.more"></div>
             <a href="#relay">
@@ -287,6 +311,23 @@
                             <option value="ripple" data-i18n="press.ripple"></option>
                         </select>
                     </label>
+                    <label class="field"><span data-i18n="keyboard.presses"></span>
+                        <select data-param="presses">
+                            <option value="" data-i18n="presses.none"></option>
+                            <option value="heat" data-i18n="presses.heat"></option>
+                            <option value="count" data-i18n="presses.count"></option>
+                            <option value="both" data-i18n="presses.both"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="keyboard.reset"></span>
+                        <select data-param="reset">
+                            <option value="" data-i18n="reset.never"></option>
+                            <option value="10" data-i18n="reset.10"></option>
+                            <option value="30" data-i18n="reset.30"></option>
+                            <option value="60" data-i18n="reset.60"></option>
+                            <option value="300" data-i18n="reset.300"></option>
+                        </select>
+                    </label>
                     <div class="slider" data-slider="fade" data-var="--key-release-time" data-format="seconds" data-max="2" data-step="0.05" data-label="look.fade"></div>
                     <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
                     <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
@@ -343,6 +384,128 @@
                         </select>
                     </label>
                     <p class="muted small" data-i18n="mouseMove.hint"></p>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="counter" data-page="counter.html" data-colors="line" hidden>
+            <h2 data-i18n="counter.title"></h2>
+            <div class="preview"><iframe data-i18n-title="preview.counter"></iframe></div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="counter.show"></span>
+                        <select data-param="show">
+                            <option value="" data-i18n="counter.show.both"></option>
+                            <option value="kps" data-i18n="counter.show.kps"></option>
+                            <option value="cps" data-i18n="counter.show.cps"></option>
+                            <option value="lr" data-i18n="counter.show.lr"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="option.scale"></span>
+                        <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
+                    </label>
+                    <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
+                    <div class="slider" data-slider="idle" data-var="--idle-opacity" data-format="opacity" data-max="1" data-step="0.05" data-label="look.idle"></div>
+                    <p class="muted small" data-i18n="counter.hint"></p>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="history" data-page="history.html" data-colors="pressed line" hidden>
+            <h2 data-i18n="history.title"></h2>
+            <div class="preview"><iframe data-i18n-title="preview.history"></iframe></div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="history.only"></span>
+                        <select data-param="only">
+                            <option value="" data-i18n="history.only.all"></option>
+                            <option value="combos" data-i18n="history.only.combos"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="history.align"></span>
+                        <select data-param="align">
+                            <option value="" data-i18n="history.align.left"></option>
+                            <option value="center" data-i18n="history.align.center"></option>
+                            <option value="right" data-i18n="history.align.right"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="history.max"></span>
+                        <input type="number" data-param="max" min="1" max="12" step="1" placeholder="5">
+                    </label>
+                    <label class="field"><span data-i18n="history.time"></span>
+                        <input type="number" data-param="time" min="0.5" max="30" step="0.5" placeholder="3">
+                    </label>
+                    <label class="field"><span data-i18n="history.width"></span>
+                        <input type="number" data-param="width" min="160" max="1600" step="20" placeholder="360">
+                    </label>
+                    <label class="field"><span data-i18n="option.scale"></span>
+                        <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
+                    </label>
+                    <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
+                    <p class="warn small" data-i18n="history.privacy"></p>
+                </div>
+                <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
+                <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
+            </div>
+        </section>
+
+        <section class="panel" data-panel="bars" data-page="bars.html" data-colors="pressed released glow line" hidden>
+            <h2 data-i18n="bars.title"></h2>
+            <div class="preview"><iframe data-i18n-title="preview.bars"></iframe></div>
+            <div class="columns">
+                <div class="box">
+                    <h3 data-i18n="box.options"></h3>
+                    <label class="field"><span data-i18n="bars.keys"></span>
+                        <select data-param="keys">
+                            <option value="" data-i18n="bars.keys.osu"></option>
+                            <option value="KeyZ,KeyX,Mouse1,Mouse2" data-i18n="bars.keys.osuMouse"></option>
+                            <option value="KeyD,KeyF,KeyJ,KeyK" data-i18n="bars.keys.k4"></option>
+                            <option value="KeyS,KeyD,KeyF,Space,KeyJ,KeyK,KeyL" data-i18n="bars.keys.k7"></option>
+                            <option value="KeyA,KeyW,KeyS,KeyD" data-i18n="bars.keys.wasd"></option>
+                            <option value="Mouse1,Mouse2" data-i18n="bars.keys.mouse"></option>
+                            <option value="custom" data-i18n="bars.keys.custom"></option>
+                        </select>
+                    </label>
+                    <!-- Shown for "Custom": the lanes' keys, filled by pressing them. -->
+                    <div class="lane-keys" hidden>
+                        <div class="lane-chips" role="group" data-i18n-aria="bars.keys"></div>
+                        <div class="row">
+                            <button type="button" class="secondary lane-listen" aria-pressed="false" data-i18n="bars.listen"></button>
+                            <button type="button" class="secondary lane-clear" data-i18n="picker.none"></button>
+                        </div>
+                        <p class="lane-note small muted" aria-live="polite"></p>
+                    </div>
+                    <label class="field"><span data-i18n="bars.dir"></span>
+                        <select data-param="dir">
+                            <option value="" data-i18n="bars.dir.up"></option>
+                            <option value="right" data-i18n="bars.dir.right"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="bars.counts"></span>
+                        <select data-param="counts">
+                            <option value="" data-i18n="bars.counts.show"></option>
+                            <option value="0" data-i18n="bars.counts.hide"></option>
+                        </select>
+                    </label>
+                    <label class="field"><span data-i18n="bars.speed"></span>
+                        <input type="number" data-param="speed" min="50" max="3000" step="50" placeholder="500">
+                    </label>
+                    <label class="field"><span data-i18n="bars.length"></span>
+                        <input type="number" data-param="length" min="100" max="1600" step="20" placeholder="400">
+                    </label>
+                    <label class="field"><span data-i18n="option.scale"></span>
+                        <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
+                    </label>
+                    <div class="slider" data-slider="fade" data-var="--key-release-time" data-format="seconds" data-max="2" data-step="0.05" data-label="look.fade"></div>
+                    <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
+                    <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
+                    <p class="muted small" data-i18n="bars.hint"></p>
                 </div>
                 <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
                 <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
@@ -416,6 +579,18 @@
                 <p class="small" id="files-result" aria-live="polite" hidden></p>
                 <p class="muted small" data-i18n-html="files.readme"></p>
             </div>
+            <div class="box prose">
+                <h3 data-i18n="resetAll.title"></h3>
+                <p class="muted" data-i18n="resetAll.text"></p>
+                <div class="row" id="reset-ask">
+                    <button type="button" class="danger" id="reset-all" data-i18n="resetAll.button"></button>
+                </div>
+                <div class="row" id="reset-confirm" hidden>
+                    <span data-i18n="resetAll.confirm"></span>
+                    <button type="button" class="danger" id="reset-yes" data-i18n="resetAll.yes"></button>
+                    <button type="button" class="secondary" id="reset-no" data-i18n="resetAll.no"></button>
+                </div>
+            </div>
         </section>
     </main>
 </div>
@@ -450,6 +625,32 @@
             return element;
         }
 
+        // ---- keys pressed to try an overlay ----
+        // After a click, the clicked button, link or menu keeps the focus, and keys pressed to try an overlay
+        // would act on it: Space or Enter press the button, letters and arrows change the menu, and the browser
+        // draws the blue focus ring of keyboard use around it. So after a click, the first such key only lets go
+        // of the focus. Tab brings the keyboard way back (focus rings, keys acting on menus); fields still type.
+        // Even then, letters and Space do not change a menu (a <select> jumps to the option starting with the
+        // letter: Z picked "Z X + ..." on the bars).
+        var root = document.documentElement;
+        document.addEventListener('mousedown', function () { root.classList.add('mouse-used'); }, true);
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Tab') {
+                root.classList.remove('mouse-used');
+                return;
+            }
+            if (event.ctrlKey || event.altKey || event.metaKey) return; // browser shortcuts stay
+            var focused = document.activeElement;
+            if (!focused || focused === document.body || focused.matches('input, textarea')) return;
+            var acts = event.key.length === 1 || /^(Enter|Arrow|Home$|End$|Page)/.test(event.key);
+            if (root.classList.contains('mouse-used')) {
+                focused.blur();
+                if (acts) event.preventDefault();
+            } else if (focused.tagName === 'SELECT' && event.key.length === 1) {
+                event.preventDefault();
+            }
+        }, true);
+
         var info = t.info;
         Overlay.translate(t, document);
         document.title = info.version ? t('page.titleVersion', { version: info.version }) : t('page.title');
@@ -480,6 +681,11 @@
                 set: function (name, value) {
                     data[name] = value;
                     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) { /* not remembered, still works */ }
+                },
+                // Forgets everything (About > Reset all settings).
+                clear: function () {
+                    data = {};
+                    try { localStorage.removeItem(KEY); } catch (e) { /* nothing was remembered */ }
                 }
             };
         })();
@@ -894,6 +1100,168 @@
             };
         }
 
+        // ---- the bars' own keys (bars.html?keys=KeyQ,KeyW,Mouse1) ----
+        // "Custom" in the bars' Keys menu shows the keys as chips. While "Add by pressing" is on, keys pressed on
+        // the keyboard and mouse buttons pressed inside the chips area are added (a click elsewhere on the page
+        // stays a click); when it stops, the lanes are put in keyboard order, left to right, then the mouse
+        // buttons. The menu then puts the list into the URL, or keys=none when it is empty.
+
+        var BAR_LANES = 10; // bars.html takes up to this many
+        var MOUSE_LANES = ['Mouse1', 'Mouse2', 'Mouse3', 'Mouse4', 'Mouse5'];
+
+        function laneKeys(select, box) {
+            var chips = box.querySelector('.lane-chips');
+            var listenButton = box.querySelector('.lane-listen');
+            var note = box.querySelector('.lane-note');
+            var keys = [];
+            var listening = false;
+            var added = false;      // keys were added since "Add by pressing" was turned on
+            var fromList = false;   // the change event below comes from the list, not from the menu
+            var lastPreset = '';
+            var places = {};        // key name -> [x of its middle, y] on the full-size layout
+
+            fetch('layouts/full.json')
+                .then(function (response) { return response.json(); })
+                .then(function (layout) {
+                    Overlay.layoutKeys(layout).forEach(function (key) { places[key.name] = [key.x + key.w / 2, key.y]; });
+                })
+                .catch(function () { /* the lanes stay in the order they were added */ });
+
+            // Keyboard keys left to right as on the keyboard (Space between F and J), keys not on the
+            // full-size layout in the order added, then the mouse buttons.
+            function sortKeys() {
+                function rank(name) {
+                    if (places[name]) return [0, places[name][0], places[name][1]];
+                    var button = MOUSE_LANES.indexOf(name);
+                    return button >= 0 ? [2, button, 0] : [1, keys.indexOf(name), 0];
+                }
+                var sorted = keys.slice().sort(function (a, b) {
+                    var ra = rank(a), rb = rank(b);
+                    return ra[0] - rb[0] || ra[1] - rb[1] || ra[2] - rb[2];
+                });
+                var moved = sorted.join(',') !== keys.join(',');
+                keys = sorted;
+                return moved;
+            }
+
+            function render() {
+                chips.textContent = '';
+                keys.forEach(function (name, i) {
+                    var chip = el('span', 'lane-chip', Overlay.keyLabel(name));
+                    chip.title = name;
+                    var remove = el('button', null, '×');
+                    remove.type = 'button';
+                    remove.title = t('bars.remove', { name: Overlay.keyLabel(name) });
+                    remove.setAttribute('aria-label', remove.title);
+                    remove.addEventListener('click', function () {
+                        keys.splice(i, 1);
+                        changed();
+                    });
+                    chip.appendChild(remove);
+                    chips.appendChild(chip);
+                });
+                if (!keys.length) chips.appendChild(el('span', 'muted small', t('bars.noKeys')));
+            }
+
+            function changed() {
+                render();
+                fromList = true;
+                select.dispatchEvent(new Event('change')); // the card saves it and builds the URL again
+                fromList = false;
+            }
+
+            function setNote(text, tone) {
+                note.textContent = text;
+                note.className = 'lane-note small ' + (tone || 'muted');
+            }
+
+            function setListening(on) {
+                listening = on;
+                listenButton.setAttribute('aria-pressed', on ? 'true' : 'false');
+                listenButton.classList.toggle('listening', on);
+                listenButton.textContent = t(on ? 'picker.listening' : 'bars.listen');
+                chips.classList.toggle('listening', on);
+                setNote(on ? t('bars.listenHint') : '');
+                if (!on && added) {
+                    added = false;
+                    if (sortKeys()) changed();
+                }
+            }
+
+            function stillListening() {
+                if (listening && (box.hidden || box.closest('[data-panel]').hidden)) setListening(false);
+                return listening;
+            }
+
+            function add(name) {
+                if (keys.indexOf(name) >= 0) return;
+                if (keys.length >= BAR_LANES) {
+                    setNote(t('bars.full', { count: BAR_LANES }), 'warn');
+                    return;
+                }
+                keys.push(name);
+                added = true;
+                changed();
+            }
+
+            function show() {
+                box.hidden = select.value !== 'custom';
+                if (box.hidden && listening) setListening(false);
+                render();
+            }
+
+            listenButton.addEventListener('click', function () { setListening(!listening); });
+            box.querySelector('.lane-clear').addEventListener('click', function () {
+                keys = [];
+                changed();
+            });
+            window.addEventListener('blur', function () { if (listening) setListening(false); });
+            document.addEventListener('keydown', function (event) {
+                if (stillListening()) event.preventDefault(); // no scrolling on Space, no button press on Enter, ...
+            });
+            keyListeners.push(function (name, down) { if (down && stillListening()) add(name); });
+            var BUTTONS = ['Mouse1', 'Mouse3', 'Mouse2', 'Mouse4', 'Mouse5']; // by MouseEvent.button
+            chips.addEventListener('mousedown', function (event) {
+                if (!stillListening() || event.target.closest('button')) return;
+                event.preventDefault();
+                if (BUTTONS[event.button]) add(BUTTONS[event.button]);
+            });
+            chips.addEventListener('mouseup', function (event) {
+                if (listening && event.button > 2) event.preventDefault(); // side buttons: no going back a page
+            });
+            chips.addEventListener('contextmenu', function (event) { if (listening) event.preventDefault(); });
+
+            // Choosing "Custom" in the menu starts from the keys of the preset chosen before it.
+            select.addEventListener('change', function () {
+                if (fromList) return;
+                if (select.value === 'custom' && !keys.length) keys = (lastPreset || 'KeyZ,KeyX').split(',');
+                if (select.value !== 'custom') lastPreset = select.value;
+                show();
+            });
+            // What goes into the URL, and back from the saved options: a preset's value or the custom list.
+            select.paramValue = function () {
+                if (select.value !== 'custom') return select.value;
+                return keys.length ? keys.join(',') : 'none';
+            };
+            select.setPicked = function (value) {
+                var preset = value !== 'custom' && Array.prototype.some.call(select.options, function (option) {
+                    return option.value === value;
+                });
+                if (preset) {
+                    select.value = value;
+                    lastPreset = value;
+                } else {
+                    select.value = 'custom';
+                    keys = value === 'none' ? [] : value.split(',').filter(Boolean).slice(0, BAR_LANES);
+                }
+                show();
+            };
+            show();
+        }
+
+        laneKeys(document.querySelector('[data-panel="bars"] select[data-param="keys"]'),
+            document.querySelector('[data-panel="bars"] .lane-keys'));
+
         // ---- preview background ----
         // The previews are see-through like OBS (checkerboard); a color makes effects such as the ripple
         // easier to check. One choice for every preview, remembered in this browser. Not part of the URLs.
@@ -1028,6 +1396,14 @@
             function fit() {
                 var width = preview.clientWidth;
                 if (!size || !width) return; // not measured yet, or the panel is hidden
+                if (!size[0] || !size[1]) {
+                    // Pages that measure themselves (mouse, counter) get 0 while their panel is hidden:
+                    // load the preview again now that it shows.
+                    size = null;
+                    sizeText.textContent = t('size.measuring');
+                    iframe.contentWindow.location.reload();
+                    return;
+                }
                 var scale = Math.min(1, (width - PREVIEW_PAD * 2) / size[0], PREVIEW_MAX_HEIGHT / size[1]);
                 var shownWidth = size[0] * scale, shownHeight = size[1] * scale;
                 var left = Math.round((width - shownWidth) / 2);
@@ -1159,6 +1535,27 @@
 
         $('open-pages').addEventListener('click', function () { connection.send({ cmd: 'exportPages' }); });
         $('stale-open').addEventListener('click', function () { connection.send({ cmd: 'exportPages' }); });
+
+        // ---- About > Reset all settings ----
+        // Forgets the choices this browser remembers (options, colors, picked keys, preview background, closed
+        // notices, last panel) and sets the language back to automatic. Two-PC settings stay, and sources
+        // already in OBS keep their URLs.
+        $('reset-all').addEventListener('click', function () {
+            $('reset-ask').hidden = true;
+            $('reset-confirm').hidden = false;
+        });
+        $('reset-no').addEventListener('click', function () {
+            $('reset-confirm').hidden = true;
+            $('reset-ask').hidden = false;
+        });
+        $('reset-yes').addEventListener('click', function () {
+            location.hash = ''; // its hashchange still saves the panel; the store is cleared after that
+            if (info.langSetting && info.langSetting !== 'auto') connection.send({ cmd: 'language', lang: 'auto' });
+            setTimeout(function () {
+                store.clear();
+                location.reload();
+            }, 300);
+        });
 
         languageSelect.addEventListener('change', function () {
             connection.send({ cmd: 'language', lang: languageSelect.value });

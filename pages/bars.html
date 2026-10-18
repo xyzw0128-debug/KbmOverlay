@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Bars</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="overlay.js"></script>
+    <style>
+        #stage { position: relative; transform-origin: 0 0; }
+        #stage canvas { position: absolute; }
+        .key { flex-direction: column; gap: 2px; }
+        .key .presses { position: static; font-size: 12px; }
+    </style>
+    <link rel="stylesheet" href="custom.css"> <!-- your own look, last so it wins (see custom.css) -->
+</head>
+<body>
+    <div id="stage"></div>
+    <script>
+        // bars.html?keys=KeyZ,KeyX&dir=up|right&length=400&speed=500&counts=0&scale=1.5
+        // Like the key overlays of rhythm games: a key box per lane, and a bar that grows out of it while the
+        // key is held and then moves away at speed= px per second, fading out at the end of the track.
+        // keys= takes key and mouse button names (Mouse1 = left button), up to 10; the box shows how often
+        // each was pressed (counts=0 hides that). keys=none (an emptied custom list) shows a note instead.
+        (function () {
+            'use strict';
+
+            var LANE = 56;  // px across a lane
+            var GAP = 6;    // px between lanes, and between the boxes and the track
+            var KEY = 56;   // px of a key box along the track
+            var PAD = 12;   // px around everything, room for the glow
+            var INSET = 6;  // px between a bar and the sides of its lane
+            var FADE = 0.3; // part of the track at the far end where the bars fade out
+
+            var names = (Overlay.params.get('keys') || 'KeyZ,KeyX').split(',')
+                .map(function (name) { return name.trim(); })
+                .filter(function (name) { return name && name !== 'none'; }).slice(0, 10);
+            if (!names.length) {
+                Overlay.i18n().then(function (t) { Overlay.showError(t('overlay.noKeys')); });
+                return;
+            }
+            var RIGHT = Overlay.params.get('dir') === 'right';
+            var LENGTH = Math.round(Overlay.number('length', 400, 100, 1600));
+            var SPEED = Overlay.number('speed', 500, 50, 3000) / 1000; // px per ms
+            var COUNTS = Overlay.params.get('counts') !== '0';
+
+            var across = names.length * LANE + (names.length - 1) * GAP;
+            var along = KEY + GAP + LENGTH;
+            var width = PAD * 2 + (RIGHT ? along : across);
+            var height = PAD * 2 + (RIGHT ? across : along);
+
+            var stage = document.getElementById('stage');
+            stage.style.width = width + 'px';
+            stage.style.height = height + 'px';
+
+            // The track: above the boxes (up) or right of them (right).
+            var canvas = document.createElement('canvas');
+            var ratio = window.devicePixelRatio || 1;
+            var trackW = RIGHT ? LENGTH : across, trackH = RIGHT ? across : LENGTH;
+            canvas.width = Math.round(trackW * ratio);
+            canvas.height = Math.round(trackH * ratio);
+            canvas.style.width = trackW + 'px';
+            canvas.style.height = trackH + 'px';
+            canvas.style.left = (RIGHT ? PAD + KEY + GAP : PAD) + 'px';
+            canvas.style.top = PAD + 'px';
+            stage.appendChild(canvas);
+            var ctx = canvas.getContext('2d');
+            ctx.scale(ratio, ratio);
+
+            var probe = document.createElement('div');
+            probe.style.color = 'var(--pressed)';
+            document.body.appendChild(probe);
+            var barColor = getComputedStyle(probe).color;
+            document.body.removeChild(probe);
+
+            var releaseTime = Overlay.duration('--key-release-time') + 100;
+            var lanes = {}; // name -> { el, count, bars: [{ start, end }] }
+            names.forEach(function (name, i) {
+                var el = document.createElement('div');
+                el.className = 'key';
+                var offset = PAD + i * (LANE + GAP);
+                el.style.left = (RIGHT ? PAD : offset) + 'px';
+                el.style.top = (RIGHT ? offset : PAD + LENGTH + GAP) + 'px';
+                el.style.width = (RIGHT ? KEY : LANE) + 'px';
+                el.style.height = (RIGHT ? LANE : KEY) + 'px';
+                el.style.setProperty('--size', Math.max(KEY, LANE));
+                var label = document.createElement('span');
+                label.textContent = Overlay.keyLabel(name);
+                label.style.fontSize = (label.textContent.length > 3 ? 14 : 18) + 'px';
+                el.appendChild(label);
+                var count = document.createElement('span');
+                count.className = 'presses';
+                count.textContent = '0';
+                count.hidden = !COUNTS;
+                el.appendChild(count);
+                stage.appendChild(el);
+                lanes[name] = { el: el, index: i, presses: 0, countEl: count, bars: [] };
+            });
+
+            var scale = Overlay.number('scale', 1, 0.25, 4);
+            stage.style.transform = 'scale(' + scale + ')';
+            Overlay.reportSize(width * scale, height * scale);
+
+            // Draws every bar; returns whether one is still on the track.
+            function draw(now) {
+                ctx.clearRect(0, 0, trackW, trackH);
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = barColor;
+                var any = false;
+                Object.keys(lanes).forEach(function (name) {
+                    var lane = lanes[name];
+                    var side = lane.index * (LANE + GAP) + INSET;
+                    lane.bars = lane.bars.filter(function (bar) {
+                        var near = bar.end === null ? 0 : (now - bar.end) * SPEED; // px from the box
+                        if (near >= LENGTH) return false;
+                        var far = Math.min(LENGTH, Math.max(near + 2, (now - bar.start) * SPEED));
+                        if (RIGHT) ctx.fillRect(near, side, far - near, LANE - INSET * 2);
+                        else ctx.fillRect(side, LENGTH - far, LANE - INSET * 2, far - near);
+                        any = true;
+                        return true;
+                    });
+                });
+                if (any) {
+                    // Fade out the far end of the track.
+                    var fade = RIGHT ? ctx.createLinearGradient(LENGTH, 0, LENGTH * (1 - FADE), 0)
+                                     : ctx.createLinearGradient(0, 0, 0, LENGTH * FADE);
+                    fade.addColorStop(0, 'rgba(0, 0, 0, 1)');
+                    fade.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                    ctx.globalCompositeOperation = 'destination-out';
+                    ctx.fillStyle = fade;
+                    ctx.fillRect(0, 0, trackW, trackH);
+                }
+                return any;
+            }
+
+            // Frames run only while a bar is on the track (see mouse-move.html).
+            var running = false;
+            function frame(now) {
+                running = draw(now);
+                if (running) requestAnimationFrame(frame);
+            }
+            function wake() {
+                if (running) return;
+                running = true;
+                requestAnimationFrame(frame);
+            }
+
+            function input(name, down) {
+                var lane = lanes[name];
+                if (!lane) return;
+                var now = performance.now();
+                var el = lane.el;
+                if (down) {
+                    lane.bars.push({ start: now, end: null });
+                    lane.presses++;
+                    lane.countEl.textContent = lane.presses;
+                    el.classList.remove('released');
+                    el.classList.add('pressed');
+                } else {
+                    lane.bars.forEach(function (bar) { if (bar.end === null) bar.end = now; });
+                    el.classList.remove('pressed');
+                    void el.offsetWidth; // restart the fade when a key is tapped twice quickly
+                    el.classList.add('released');
+                    clearTimeout(el.fadeTimer);
+                    el.fadeTimer = setTimeout(function () { el.classList.remove('released'); }, releaseTime);
+                }
+                wake();
+            }
+
+            Overlay.connect(['key', 'button']).on('key', input).on('button', input);
+        })();
+    </script>
+</body>
+</html>

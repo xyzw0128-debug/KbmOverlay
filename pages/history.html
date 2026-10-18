@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Key history</title>
+    <link rel="stylesheet" href="theme.css">
+    <script src="overlay.js"></script>
+    <style>
+        /* Newest line at the bottom. A new line grows from nothing, which pushes the others up smoothly;
+           lines never shrink (flex-shrink: 0), so when many come fast the oldest just go out at the top. */
+        #history { display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box;
+                   padding: 2px 8px 8px; transform-origin: 0 0; }
+        #history.left { align-items: flex-start; }
+        #history.center { align-items: center; }
+        #history.right { align-items: flex-end; }
+        .chip { box-sizing: border-box; flex-shrink: 0; max-width: 100%; height: 40px; margin-top: 6px;
+                display: inline-flex; align-items: center; gap: 8px;
+                padding: 0 14px; border: 2px solid var(--line); border-radius: var(--key-radius);
+                background: var(--history-background); color: var(--line); font: 600 20px/1 var(--font);
+                white-space: nowrap; overflow: hidden; animation: chip-in 0.18s ease-out;
+                transition: opacity 0.3s; }
+        .chip.newest { border-color: var(--pressed); }
+        .chip .times { color: var(--pressed); font-size: 16px; }
+        .chip.leaving { opacity: 0; }
+        @keyframes chip-in {
+            from { height: 0; margin-top: 0; opacity: 0; border-width: 0 2px; }
+            60% { opacity: 1; }
+        }
+    </style>
+    <link rel="stylesheet" href="custom.css"> <!-- your own look, last so it wins (see custom.css) -->
+</head>
+<body>
+    <div id="history"></div>
+    <script>
+        // history.html?max=5&time=3&width=360&align=left|center|right&only=combos&scale=1.5
+        // Keys as they are pressed, newest at the bottom: "Ctrl + C", "W ×5" (the same key again goes on
+        // the newest line). A line goes after time= seconds; at most max= lines.
+        // A Ctrl, Alt, Shift or Win key pressed and released on its own gets a line too.
+        // only=combos: only keys pressed with Ctrl, Alt or Win (no typing, no game keys).
+        (function () {
+            'use strict';
+
+            var MAX = Math.round(Overlay.number('max', 5, 1, 12));
+            var TIME = Overlay.number('time', 3, 0.5, 30) * 1000;
+            var WIDTH = Math.round(Overlay.number('width', 360, 160, 1600));
+            var ALIGN = ['center', 'right'].indexOf(Overlay.params.get('align')) >= 0 ? Overlay.params.get('align') : 'left';
+            var COMBOS_ONLY = Overlay.params.get('only') === 'combos';
+            var LINE = 40 + 6; // px per line: .chip height and the gap
+            var LEAVE = 300;   // ms of the fade when a line goes
+
+            var MODIFIERS = {
+                LeftCtrl: 'Ctrl', RightCtrl: 'Ctrl', LeftAlt: 'Alt', RightAlt: 'Alt',
+                LeftShift: 'Shift', RightShift: 'Shift', LeftWindows: 'Win', RightWindows: 'Win'
+            };
+            var ORDER = ['Ctrl', 'Alt', 'Shift', 'Win'];
+
+            var holder = document.getElementById('history');
+            holder.className = ALIGN;
+            holder.style.width = WIDTH + 'px';
+            var HEIGHT = MAX * LINE + 10; // the lines, their margins and the padding
+            holder.style.height = HEIGHT + 'px';
+            var scale = Overlay.number('scale', 1, 0.25, 4);
+            holder.style.transform = 'scale(' + scale + ')';
+            Overlay.reportSize(WIDTH * scale, HEIGHT * scale);
+
+            var held = {};        // key name -> modifier label, for the modifiers held now
+            var aloneSince = {};  // modifier key name -> true while nothing else was pressed since it went down
+            var lines = [];       // { el, text, times, timer }, oldest first
+
+            function remove(line) {
+                var at = lines.indexOf(line);
+                if (at >= 0) lines.splice(at, 1);
+                clearTimeout(line.timer);
+                line.el.classList.add('leaving');
+                setTimeout(function () { if (line.el.parentNode) holder.removeChild(line.el); }, LEAVE);
+            }
+
+            function show(text) {
+                var newest = lines[lines.length - 1];
+                if (newest && newest.text === text) {
+                    newest.times++;
+                    newest.el.lastChild.textContent = '×' + newest.times;
+                } else {
+                    if (newest) newest.el.classList.remove('newest');
+                    var el = document.createElement('div');
+                    el.className = 'chip newest';
+                    var label = document.createElement('span');
+                    label.textContent = text;
+                    var times = document.createElement('span');
+                    times.className = 'times';
+                    el.appendChild(label);
+                    el.appendChild(times);
+                    holder.appendChild(el);
+                    newest = { el: el, text: text, times: 1 };
+                    lines.push(newest);
+                    while (lines.length > MAX) remove(lines[0]);
+                }
+                clearTimeout(newest.timer);
+                newest.timer = setTimeout(function () { remove(newest); }, TIME);
+            }
+
+            function heldLabels() {
+                var labels = {};
+                Object.keys(held).forEach(function (name) { labels[held[name]] = true; });
+                return ORDER.filter(function (label) { return labels[label]; });
+            }
+
+            Overlay.connect(['key']).on('key', function (name, down) {
+                var modifier = MODIFIERS[name];
+                if (modifier) {
+                    if (down) {
+                        held[name] = modifier;
+                        aloneSince[name] = true;
+                        return;
+                    }
+                    delete held[name];
+                    if (aloneSince[name] && !COMBOS_ONLY) show(modifier);
+                    delete aloneSince[name];
+                    return;
+                }
+                if (!down) return;
+                Object.keys(aloneSince).forEach(function (key) { aloneSince[key] = false; });
+                var mods = heldLabels();
+                if (COMBOS_ONLY && !mods.some(function (label) { return label !== 'Shift'; })) return;
+                show(mods.concat([Overlay.keyLabel(name)]).join(' + '));
+            });
+        })();
+    </script>
+</body>
+</html>

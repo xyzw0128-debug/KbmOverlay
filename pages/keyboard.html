@@ -13,6 +13,9 @@
         // keyboard.html?layout=wasd|tkl|full (a file in layouts/)&scale=1.5
         // keyboard.html?keys=KeyW,KeyA,KeyS,KeyD,Space shows only those keys, placed as on the full-size
         // layout (or on ?layout= when given). The settings page builds this list.
+        // keyboard.html?presses=heat|count|both: how often each key was pressed since the page started,
+        // as a tint (more presses, more --heat color) and/or a number in the key's corner.
+        // &reset=60 starts the counts again after that many seconds without a key press.
         // The layout file format is described in overlay.js.
         (function () {
             'use strict';
@@ -82,7 +85,74 @@
                     setTimeout(function () { board.removeChild(ring); }, rippleTime);
                 }
 
+                // ?presses=: counts per key name, shown as a tint relative to the most pressed key and/or a number.
+                var presses = Overlay.params.get('presses') || '';
+                var showHeat = presses === 'heat' || presses === 'both';
+                var showCount = presses === 'count' || presses === 'both';
+                var counts = {}, most = 0;
+                var heat = null;
+                if (showHeat) {
+                    var probe = document.createElement('div');
+                    probe.style.color = 'var(--heat)';
+                    document.body.appendChild(probe);
+                    heat = (getComputedStyle(probe).color.match(/[\d.]+/g) || [229, 72, 77]).slice(0, 3).join(', ');
+                    document.body.removeChild(probe);
+                }
+
+                function showPresses(name) {
+                    (elements[name] || []).forEach(function (el) {
+                        if (showHeat) {
+                            var alpha = (0.1 + 0.6 * counts[name] / most).toFixed(3);
+                            el.style.backgroundImage = 'linear-gradient(rgba(' + heat + ', ' + alpha + '), rgba(' + heat + ', ' + alpha + '))';
+                        }
+                        if (showCount) {
+                            if (!el.presses) {
+                                el.presses = document.createElement('span');
+                                el.presses.className = 'presses';
+                                el.appendChild(el.presses);
+                            }
+                            el.presses.textContent = counts[name];
+                        }
+                    });
+                }
+
+                // ?reset=: after that many seconds without a key press, every count goes back to nothing.
+                var RESET = Overlay.number('reset', 0, 0, 86400) * 1000;
+                var resetTimer = null;
+                function resetCounts() {
+                    counts = {};
+                    most = 0;
+                    Object.keys(elements).forEach(function (name) {
+                        elements[name].forEach(function (el) {
+                            el.style.backgroundImage = '';
+                            if (el.presses) {
+                                el.removeChild(el.presses);
+                                el.presses = null;
+                            }
+                        });
+                    });
+                }
+
+                function count(name) {
+                    counts[name] = (counts[name] || 0) + 1;
+                    if (counts[name] > most) {
+                        most = counts[name];
+                        if (showHeat) {
+                            Object.keys(counts).forEach(showPresses); // every tint is relative to the most pressed key
+                            return;
+                        }
+                    }
+                    showPresses(name);
+                }
+
                 Overlay.connect(['key']).on('key', function (name, down) {
+                    if (down && presses) {
+                        if (elements[name]) count(name);
+                        if (RESET) {
+                            clearTimeout(resetTimer);
+                            resetTimer = setTimeout(resetCounts, RESET);
+                        }
+                    }
                     (elements[name] || []).forEach(function (el) {
                         if (down) {
                             el.classList.remove('released');
