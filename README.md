@@ -75,7 +75,7 @@ streaming PC only *receives* input, and nobody can connect without you allowing 
 |---|---|---|
 | `http://localhost:5520/keyboard.html` | Keyboard | `layout=wasd` (default), `tkl`, `full` or [your own](#editing-the-files); `keys=KeyW,KeyA,…` (only these keys); `scale=1.5` |
 | `http://localhost:5520/mouse.html` | Mouse buttons and wheel | `scale=1.5` |
-| `http://localhost:5520/mouse-move.html` | Ring showing the mouse's direction | `size=400` (px), `sens=1` (sensitivity) |
+| `http://localhost:5520/mouse-move.html` | The mouse's direction and speed | `size=400` (px), `sens=1` (sensitivity); `style=ring` (default), `arrow`, `trail` |
 
 Add options after `?` and join them with `&`, e.g. `keyboard.html?layout=full&scale=0.8`.
 Add `bg=1` to any page to give it a background, which makes it easier to check in a normal browser.
@@ -118,6 +118,9 @@ the preview shows the result right away.
   keyboard and the mouse. **Default** next to a slider puts it back. Set **Shown while not pressed** to **Hidden** (0%)
   to show only the keys being pressed.
 - **Press effect:** **Sink in**, **Pop up** or **Ripple**, under **Press effect** in **Options**.
+- **Mouse movement style:** under **Style** in the **Mouse movement** options: a **Ring** that lights up in the
+  direction moved, an **Arrow** that gets longer and redder the faster the mouse moves, or a **Trail** of the path just
+  moved, fading out.
 - **Preview background:** the circles at the top right of each preview: see-through like OBS, black, gray, white or
   any color. It only changes the preview, to check effects more easily; it is not part of the URL.
 - **Which keys the keyboard shows:** set **Layout** to **Pick keys**. A full keyboard appears; click a key to turn it
