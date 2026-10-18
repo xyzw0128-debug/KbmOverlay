@@ -2,8 +2,9 @@
  * Colors and animations for all overlays. Change them here, or copy a rule into one page.
  * Key look (white outline, green press with blue glow, green fade on release) and the mouse
  * colors come from Zergatul.Obs.InputOverlay (MIT, see THIRD-PARTY-NOTICES.txt).
- * An overlay URL can also set colors (?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF) and
- * the look (?fade=0.5&glowsize=1&round=10); those win over the ones here. The settings page builds them.
+ * An overlay URL can also set colors (?pressed=2DA026&released=96CF13&glow=23ADFF&line=FFFFFF),
+ * the look (?fade=0.5&glowsize=1&round=10&idle=1) and a press effect (?press=sink|pop|ripple);
+ * those win over the ones here. The settings page builds them.
  */
 :root {
     --line: #ffffff;            /* key outline and text */
@@ -12,9 +13,12 @@
     --glow: rgba(35, 173, 255, 1);
     --glow-size: 1;             /* 0 = no glow, 2 = twice as wide (?glowsize=) */
     --key-radius: 10px;         /* key corners (?round=) */
+    --idle-opacity: 1;          /* keys and mouse while not pressed: 0 = hidden until pressed (?idle=) */
     --key-release-time: 0.5s;   /* fade after release (?fade= on keyboard.html) */
     --mouse-release-time: 0.25s; /* (?fade= on mouse.html) */
     --scroll-time: 0.25s;
+    --ripple: var(--pressed);   /* ring of ?press=ripple */
+    --ripple-time: 0.45s;
     --font: Calibri, "Malgun Gothic", "Yu Gothic UI", "Microsoft YaHei UI", "Segoe UI", sans-serif;
 }
 
@@ -46,9 +50,12 @@ html, body {
     line-height: 1;
     white-space: nowrap;
     overflow: hidden;
+    opacity: var(--idle-opacity);
 }
 
 .key.pressed {
+    z-index: 1;
+    opacity: 1;
     background-color: var(--pressed);
     box-shadow: 0 0 calc(8px * var(--glow-size)) calc(3px * var(--glow-size)) var(--glow);
 }
@@ -58,19 +65,48 @@ html, body {
 }
 
 @keyframes key-released {
-    from { background-color: var(--released); }
-    to { background-color: transparent; }
+    from { background-color: var(--released); opacity: 1; }
+    to { background-color: transparent; opacity: var(--idle-opacity); }
+}
+
+/* ?press=ripple: a ring that spreads out from the key (keyboard.html adds one per press) */
+.ripple {
+    position: absolute;
+    z-index: 2;   /* over the glow of the pressed key */
+    pointer-events: none;
+}
+
+.ripple::before {
+    content: "";
+    position: absolute;
+    top: 0; right: 0; bottom: 0; left: 0;
+    box-sizing: border-box;
+    border: 2px solid var(--ripple);
+    border-radius: var(--key-radius);
+    animation: key-ripple var(--ripple-time) ease-out forwards;
+}
+
+@keyframes key-ripple {
+    to { top: -16px; right: -16px; bottom: -16px; left: -16px; border-radius: calc(var(--key-radius) + 16px); opacity: 0; }
 }
 
 /* ---- mouse ---- */
 
+.mouse-part {
+    opacity: var(--idle-opacity);
+}
+
 .mouse-button {
     fill: var(--pressed);
     fill-opacity: 0;
+    opacity: var(--idle-opacity);
+    transform-box: fill-box;
+    transform-origin: center;
 }
 
 .mouse-button.pressed {
     fill-opacity: 1;
+    opacity: 1;
     filter: url(#glow);
 }
 
@@ -79,8 +115,46 @@ html, body {
 }
 
 @keyframes mouse-released {
-    from { fill: var(--released); fill-opacity: 1; }
-    to { fill: var(--released); fill-opacity: 0; }
+    from { fill: var(--released); fill-opacity: 1; opacity: 1; }
+    to { fill: var(--released); fill-opacity: 0; opacity: var(--idle-opacity); }
+}
+
+/* ?press=ripple: a copy of the button's outline that spreads out (mouse.html adds one per press).
+ * --width / --height are the button's size in px, so it spreads by 12px on every side. */
+.mouse-ripple {
+    fill: none;
+    stroke: var(--ripple);
+    stroke-width: 2px;
+    vector-effect: non-scaling-stroke;
+    transform-box: fill-box;
+    transform-origin: center;
+    pointer-events: none;
+    animation: mouse-ripple var(--ripple-time) ease-out forwards;
+}
+
+@keyframes mouse-ripple {
+    to { transform: scale(calc(1 + 24 / var(--width)), calc(1 + 24 / var(--height))); opacity: 0; }
+}
+
+/* ---- press effects (?press=) for keys and mouse buttons ----
+ * --size is the longer side of each key or button in px, so every key moves by about the same
+ * number of px: a wide Space bar does not grow over its neighbors. */
+
+.press-sink .key, .press-sink .mouse-button,
+.press-pop .key, .press-pop .mouse-button {
+    transition: transform 0.15s ease-out;
+}
+
+/* pushed in while held */
+.press-sink .key.pressed, .press-sink .mouse-button.pressed {
+    transform: scale(calc(1 - 6 / var(--size)));
+    transition-duration: 0.06s;
+}
+
+/* springs up while held */
+.press-pop .key.pressed, .press-pop .mouse-button.pressed {
+    transform: scale(calc(1 + 6 / var(--size)));
+    transition: transform 0.2s cubic-bezier(0.34, 1.8, 0.64, 1);
 }
 
 .scroll {

@@ -13,7 +13,7 @@
 <body>
     <div id="mouse"></div>
     <script>
-        // mouse.html?scale=1.5 (and ?fade= / ?glowsize=, see overlay.js)
+        // mouse.html?scale=1.5 (and ?fade= / ?glowsize= / ?idle= / ?press=, see overlay.js)
         // mouse.svg (from Zergatul.Obs.InputOverlay) has elements with ids Mouse1..Mouse5,
         // MouseScrollUp and MouseScrollDown; this page colors them through theme.css.
         (function () {
@@ -35,10 +35,13 @@
                 svg.appendChild(defs);
             }
 
-            function restart(el, cls) {
+            // Starts the animation of cls again and ends it by a timer too (see Overlay.duration).
+            function restart(el, cls, time) {
                 el.classList.remove('up', 'down', 'released');
                 void el.getBoundingClientRect(); // restart the animation
                 el.classList.add(cls);
+                clearTimeout(el.endTimer);
+                el.endTimer = setTimeout(function () { el.classList.remove(cls); }, time);
             }
 
             function start(svgText) {
@@ -55,17 +58,42 @@
                     if (!el) return;
                     el.style.removeProperty('fill'); // the svg says fill:none inline; theme.css decides
                     el.classList.add('mouse-button');
+                    var box = el.getBoundingClientRect(); // px, for the press effects in theme.css
+                    el.style.setProperty('--width', box.width);
+                    el.style.setProperty('--height', box.height);
+                    el.style.setProperty('--size', Math.max(box.width, box.height));
                     buttons[id] = el;
                 });
                 var scrollUp = svg.getElementById('MouseScrollUp');
                 var scrollDown = svg.getElementById('MouseScrollDown');
                 scrollUp.classList.add('scroll');
                 scrollDown.classList.add('scroll');
+                // The rest of the outline is .mouse-part, which ?idle= (theme.css --idle-opacity) can fade out.
+                Array.prototype.forEach.call(svg.querySelectorAll('path, rect'), function (part) {
+                    if (part.classList.contains('mouse-button') || scrollUp.contains(part) || scrollDown.contains(part)) return;
+                    part.style.removeProperty('opacity'); // some parts say opacity:1 inline
+                    part.classList.add('mouse-part');
+                });
 
                 var scale = Overlay.number('scale', 1, 0.25, 4);
                 var width = holder.offsetWidth, height = holder.offsetHeight;
                 holder.style.transform = 'scale(' + scale + ')';
                 Overlay.reportSize(width * scale, height * scale);
+
+                var releaseTime = Overlay.duration('--mouse-release-time') + 100;
+                var scrollTime = Overlay.duration('--scroll-time') + 100;
+                var rippleTime = Overlay.duration('--ripple-time') + 100;
+
+                // ?press=ripple: a copy of the button's outline spreads out from it (.mouse-ripple in theme.css).
+                function ripple(el) {
+                    var ring = el.cloneNode(false);
+                    ring.removeAttribute('id');
+                    ring.removeAttribute('style'); // the svg's own stroke and fill; theme.css decides
+                    ring.setAttribute('class', 'mouse-ripple');
+                    ['--width', '--height'].forEach(function (name) { ring.style.setProperty(name, el.style.getPropertyValue(name)); });
+                    el.parentNode.appendChild(ring);
+                    setTimeout(function () { ring.parentNode.removeChild(ring); }, rippleTime);
+                }
 
                 Overlay.connect(['button', 'wheel'])
                     .on('button', function (name, down) {
@@ -74,14 +102,15 @@
                         if (down) {
                             el.classList.remove('released');
                             el.classList.add('pressed');
+                            if (Overlay.press === 'ripple') ripple(el);
                         } else {
                             el.classList.remove('pressed');
-                            restart(el, 'released');
+                            restart(el, 'released', releaseTime);
                         }
                     })
                     .on('wheel', function (dx, dy) {
-                        if (dy > 0) restart(scrollUp, 'up');
-                        else if (dy < 0) restart(scrollDown, 'down');
+                        if (dy > 0) restart(scrollUp, 'up', scrollTime);
+                        else if (dy < 0) restart(scrollDown, 'down', scrollTime);
                     });
             }
 

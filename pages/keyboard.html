@@ -18,7 +18,7 @@
 
             var UNIT = 48;   // px from one key to the next
             var GAP = 4;     // px between keys
-            var PAD = 12;    // px around the board, room for the glow
+            var PAD = Overlay.press === 'ripple' ? 18 : 12;   // px around the board, room for the glow (and ripples)
 
             function fitFont(label, width, height) {
                 var size = Math.min(20, height * 0.55);
@@ -49,6 +49,7 @@
                     el.style.width = width + 'px';
                     el.style.height = height + 'px';
                     el.style.fontSize = (key.font || fitFont(key.label, width, height)) + 'px';
+                    el.style.setProperty('--size', Math.max(width, height)); // for the press effects in theme.css
                     el.textContent = key.label;
                     board.appendChild(el);
                     (elements[key.name] = elements[key.name] || []).push(el);
@@ -64,15 +65,34 @@
                 board.style.transform = 'scale(' + scale + ')';
                 Overlay.reportSize(width * scale, height * scale);
 
+                // The fade and the ripples end by timers too (see Overlay.duration).
+                var releaseTime = Overlay.duration('--key-release-time') + 100;
+                var rippleTime = Overlay.duration('--ripple-time') + 100;
+
+                // ?press=ripple: a ring the shape of the key spreads out from it (.ripple in theme.css).
+                function ripple(el) {
+                    var ring = document.createElement('div');
+                    ring.className = 'ripple';
+                    ring.style.left = el.style.left;
+                    ring.style.top = el.style.top;
+                    ring.style.width = el.style.width;
+                    ring.style.height = el.style.height;
+                    board.appendChild(ring);
+                    setTimeout(function () { board.removeChild(ring); }, rippleTime);
+                }
+
                 Overlay.connect(['key']).on('key', function (name, down) {
                     (elements[name] || []).forEach(function (el) {
                         if (down) {
                             el.classList.remove('released');
                             el.classList.add('pressed');
+                            if (Overlay.press === 'ripple') ripple(el);
                         } else {
                             el.classList.remove('pressed');
                             void el.offsetWidth; // restart the fade when a key is tapped twice quickly
                             el.classList.add('released');
+                            clearTimeout(el.fadeTimer);
+                            el.fadeTimer = setTimeout(function () { el.classList.remove('released'); }, releaseTime);
                         }
                     });
                 });

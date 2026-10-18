@@ -20,8 +20,8 @@ KbmOverlay shows your keyboard and mouse input in OBS as browser sources. It wor
 1. Download `KbmOverlay.exe` from [Releases](https://github.com/xyzw0128-debug/KbmOverlay/releases/latest) and double-click it.
    The first time, Windows may say "Windows protected your PC" because the exe is not code-signed.
    Choose **More info → Run anyway**.
-2. Press **Enter** in its window to open the settings page (`http://localhost:5520/`) in your browser.
-   It has the URLs to copy, the sizes to use in OBS, and live previews.
+2. The settings page (`http://localhost:5520/`) opens in your browser. If you closed it, press **Enter** in
+   KbmOverlay's window. It has the URLs to copy, the sizes to use in OBS, and live previews.
 3. In OBS, under **Sources**, press **+** → **Browser**, and paste a copied URL into **URL**.
    Set **Width** and **Height** to the numbers on the settings page. Leave "Local file" unchecked.
 
@@ -83,7 +83,8 @@ Add `bg=1` to any page to give it a background, which makes it easier to check i
 Every page also takes colors, as 6 hex digits without `#`: `pressed` (held), `released` (start of the fade),
 `glow` (keyboard only) and `line` (outline), e.g. `keyboard.html?pressed=1F6FEB&line=FFCC00`.
 The keyboard and mouse also take `fade` (seconds the fade after release lasts, `0` = none), `glowsize` (`1` = normal,
-`0` = no glow) and, keyboard only, `round` (key corner in px).
+`0` = no glow), `idle` (how much shows while not pressed, `1` = normal, `0` = only while pressed), `press` (press
+effect: `sink`, `pop` or `ripple`) and, keyboard only, `round` (key corner in px).
 
 You don't need to type any of this: everything in [Customizing](#customizing) is set on the settings page, which
 builds the URL. Changes there do not change sources already in OBS; copy the URL again and replace it in the source.
@@ -113,8 +114,12 @@ Everything is on the settings page. Your choices go into the overlay URL, so eac
 the preview shows the result right away.
 
 - **Colors:** the **Colors** box (presets, or a picker per color). The same colors go into every overlay's URL.
-- **Fade after release, glow size, rounded corners:** the sliders under **Options** for the keyboard and the mouse.
-  **Default** next to a slider puts it back.
+- **Fade after release, glow size, rounded corners, shown while not pressed:** the sliders under **Options** for the
+  keyboard and the mouse. **Default** next to a slider puts it back. Set **Shown while not pressed** to **Hidden** (0%)
+  to show only the keys being pressed.
+- **Press effect:** **Sink in**, **Pop up** or **Ripple**, under **Press effect** in **Options**.
+- **Preview background:** the circles at the top right of each preview: see-through like OBS, black, gray, white or
+  any color. It only changes the preview, to check effects more easily; it is not part of the URL.
 - **Which keys the keyboard shows:** set **Layout** to **Pick keys**. A full keyboard appears; click a key to turn it
   on or off. **Add by pressing** adds every key you press on your real keyboard until you press the button again or
   switch to another window. **Around WASD**, **All** and **Clear** are quick starts.
@@ -179,6 +184,7 @@ The names match Zergatul Input Overlay, so its pages are easy to port.
 | `--port 5530` | Overlay port (default 5520). Change the port in your OBS URLs too. Avoid 5521, which two PCs use. |
 | `--lang ja` | Language of the console and the settings page (`en`, `ko`, `ja`, `zh`, …). |
 | `--export-pages` | Copy the built-in pages to a `pages` folder. Existing files are not overwritten. Same as **Open the pages folder** on the settings page. |
+| `--no-browser` | Do not open the settings page when starting, e.g. when KbmOverlay starts with Windows. **Enter** in its window still opens it. |
 | `--firewall-check` | Show the streaming PC's firewall status for Private, Domain and Public networks (read only). For troubleshooting two PCs. |
 
 ## How it works

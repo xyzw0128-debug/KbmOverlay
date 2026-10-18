@@ -23,6 +23,9 @@
         * { box-sizing: border-box; }
         [hidden] { display: none !important; }
         html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 var(--font); }
+        /* No blue selection when clicking fast (to try the mouse) or dragging; fields and codes can still be selected. */
+        body { -webkit-user-select: none; user-select: none; }
+        input, textarea, code, .code { -webkit-user-select: text; user-select: text; }
         h2 { font-size: 20px; margin: 0 0 14px; }
         h3 { font-size: 15px; margin: 0 0 10px; }
         p { margin: 0; }
@@ -59,6 +62,11 @@
 
         /* ---- shared pieces ---- */
         .notice { border: 1px solid var(--warn); color: var(--warn); border-radius: 8px; padding: 10px 14px; margin-bottom: 16px; }
+        .notice.closable { display: flex; align-items: flex-start; gap: 12px; }
+        .notice.closable > span { flex: 1; }
+        button.close { flex-shrink: 0; display: flex; padding: 3px; margin: -2px -6px -2px 0; border-radius: 6px; background: none; color: inherit; }
+        button.close:hover { background: var(--hover); }
+        button.close svg { width: 16px; height: 16px; }
         .banner { border: 2px solid var(--warn); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; background: var(--card); }
         .banner p { margin: 0 0 6px; }
         .banner .code { font: 600 28px/1.2 Consolas, monospace; letter-spacing: 2px; color: var(--warn); }
@@ -82,7 +90,16 @@
         /* ---- overlay panels: big preview on top, three boxes below ---- */
         .preview { position: relative; overflow: hidden; min-height: 140px; margin-bottom: 14px; border: 1px solid var(--line); border-radius: 12px;
                    background: #0b0c0e repeating-conic-gradient(#14161a 0% 25%, #0b0c0e 0% 50%) 0 0 / 24px 24px; }
-        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; }
+        .preview iframe { position: absolute; left: 0; top: 0; border: 0; transform-origin: 0 0; background: transparent; pointer-events: none; }
+        /* Preview background, top right of every preview: see-through like OBS, or a color to check effects on. */
+        .preview-bg { position: absolute; top: 10px; right: 10px; z-index: 1; display: flex; align-items: center; gap: 6px; padding: 5px 7px;
+                      border: 1px solid var(--line); border-radius: 16px; background: rgba(23, 24, 27, 0.85); }
+        .bg-swatch { position: relative; flex-shrink: 0; width: 20px; height: 20px; padding: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3); cursor: pointer; }
+        .bg-swatch.checker { background: #0b0c0e repeating-conic-gradient(#3a3d44 0% 25%, #0b0c0e 0% 50%) 0 0 / 10px 10px; }
+        .bg-swatch.pick { background: conic-gradient(#f44, #fd4, #4d4, #4df, #46f, #d4f, #f44); }
+        .bg-swatch.pick input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+        .bg-swatch[aria-pressed="true"], .bg-swatch.pick.selected { outline: 2px solid var(--text); outline-offset: 2px; }
+        .bg-swatch.pick:focus-within { outline: 2px solid var(--link); outline-offset: 2px; }
         .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; color: var(--muted); font-size: 13px; }
         .field select, .field input { width: 100%; }
         .url { width: 100%; margin-bottom: 8px; font: 13px Consolas, monospace; }
@@ -213,7 +230,12 @@
             <p class="muted" data-i18n="waiting.hint"></p>
         </div>
 
-        <div class="notice" id="admin-notice" data-i18n="admin.notice" hidden></div>
+        <div class="notice closable" id="admin-notice" hidden>
+            <span data-i18n="admin.notice"></span>
+            <button type="button" class="close" id="admin-notice-close" data-i18n-title="admin.close" data-i18n-aria="admin.close">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+            </button>
+        </div>
 
         <section class="panel" data-panel="keyboard" data-page="keyboard.html" data-colors="pressed released glow line" hidden>
             <h2 data-i18n="keyboard.title"></h2>
@@ -246,9 +268,18 @@
                     <label class="field"><span data-i18n="option.scale"></span>
                         <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
                     </label>
+                    <label class="field"><span data-i18n="look.press"></span>
+                        <select data-param="press">
+                            <option value="" data-i18n="press.none"></option>
+                            <option value="sink" data-i18n="press.sink"></option>
+                            <option value="pop" data-i18n="press.pop"></option>
+                            <option value="ripple" data-i18n="press.ripple"></option>
+                        </select>
+                    </label>
                     <div class="slider" data-slider="fade" data-var="--key-release-time" data-format="seconds" data-max="2" data-step="0.05" data-label="look.fade"></div>
                     <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
                     <div class="slider" data-slider="round" data-var="--key-radius" data-format="px" data-max="24" data-step="1" data-label="look.round"></div>
+                    <div class="slider" data-slider="idle" data-var="--idle-opacity" data-format="opacity" data-max="1" data-step="0.05" data-label="look.idle"></div>
                 </div>
                 <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
                 <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
@@ -264,8 +295,17 @@
                     <label class="field"><span data-i18n="option.scale"></span>
                         <input type="number" data-param="scale" min="0.25" max="4" step="0.25" placeholder="1">
                     </label>
+                    <label class="field"><span data-i18n="look.press"></span>
+                        <select data-param="press">
+                            <option value="" data-i18n="press.none"></option>
+                            <option value="sink" data-i18n="press.sink"></option>
+                            <option value="pop" data-i18n="press.pop"></option>
+                            <option value="ripple" data-i18n="press.ripple"></option>
+                        </select>
+                    </label>
                     <div class="slider" data-slider="fade" data-var="--mouse-release-time" data-format="seconds" data-max="1.5" data-step="0.05" data-label="look.fade"></div>
                     <div class="slider" data-slider="glowsize" data-var="--glow-size" data-format="percent" data-max="3" data-step="0.1" data-label="look.glowsize"></div>
+                    <div class="slider" data-slider="idle" data-var="--idle-opacity" data-format="opacity" data-max="1" data-step="0.05" data-label="look.idle"></div>
                 </div>
                 <div class="box colors"><h3 data-i18n="box.colors"></h3></div>
                 <div class="box obs"><h3 data-i18n="box.obs"></h3></div>
@@ -395,7 +435,6 @@
         var info = t.info;
         Overlay.translate(t, document);
         document.title = info.version ? t('page.titleVersion', { version: info.version }) : t('page.title');
-        $('admin-notice').hidden = info.elevated !== false;
         if (info.version) {
             $('version').textContent = info.version;
             $('about-version').textContent = t('about.version', { version: info.version });
@@ -426,6 +465,14 @@
                 }
             };
         })();
+
+        // ---- "not running as administrator" notice; X hides it for good in this browser ----
+
+        $('admin-notice').hidden = info.elevated !== false || store.get('adminNoticeClosed') === true;
+        $('admin-notice-close').addEventListener('click', function () {
+            $('admin-notice').hidden = true;
+            store.set('adminNoticeClosed', true);
+        });
 
         // ---- language ----
 
@@ -491,16 +538,16 @@
             }).join('').toUpperCase();
         }
 
-        // ---- look (fade time, glow size, key corners) ----
-        // Also URL options (?fade=0.5&glowsize=1&round=10), set per overlay with the sliders in Options.
+        // ---- look (fade time, glow size, key corners, shown while not pressed) ----
+        // Also URL options (?fade=0.5&glowsize=1&round=10&idle=1), set per overlay with the sliders in Options.
         // A slider left at the theme.css value adds nothing to the URL.
 
-        var lookDefaults = { '--key-release-time': 0.5, '--mouse-release-time': 0.25, '--glow-size': 1, '--key-radius': 10 }; // until theme.css is read
+        var lookDefaults = { '--key-release-time': 0.5, '--mouse-release-time': 0.25, '--glow-size': 1, '--key-radius': 10, '--idle-opacity': 1 }; // until theme.css is read
 
         function formatLook(format, value) {
             if (format === 'px') return t('unit.px', { value: value });
-            if (value === 0) return t('look.off');
-            if (format === 'percent') return t('unit.percent', { value: Math.round(value * 100) });
+            if (value === 0) return t(format === 'opacity' ? 'look.hidden' : 'look.off');
+            if (format === 'percent' || format === 'opacity') return t('unit.percent', { value: Math.round(value * 100) });
             return t('unit.seconds', { value: value });
         }
 
@@ -803,6 +850,62 @@
             };
         }
 
+        // ---- preview background ----
+        // The previews are see-through like OBS (checkerboard); a color makes effects such as the ripple
+        // easier to check. One choice for every preview, remembered in this browser. Not part of the URLs.
+
+        var PREVIEW_BACKGROUNDS = [
+            { color: '', name: 'previewBg.clear' },
+            { color: '#000000', name: 'previewBg.black' },
+            { color: '#808080', name: 'previewBg.gray' },
+            { color: '#FFFFFF', name: 'previewBg.white' }
+        ];
+        var previewBg = /^#[0-9A-F]{6}$/.test(store.get('previewBg')) ? store.get('previewBg') : '';
+        var previewBgRenders = [];
+
+        function setPreviewBg(color) {
+            previewBg = color;
+            store.set('previewBg', color);
+            previewBgRenders.forEach(function (render) { render(); });
+        }
+
+        // Puts the swatches and a color picker at the top right of one preview and returns them.
+        function previewBgPicker(preview) {
+            var group = el('div', 'preview-bg');
+            group.setAttribute('role', 'group');
+            group.setAttribute('aria-label', t('previewBg.label'));
+            var swatches = PREVIEW_BACKGROUNDS.map(function (choice) {
+                var button = el('button', choice.color ? 'bg-swatch' : 'bg-swatch checker');
+                button.type = 'button';
+                if (choice.color) button.style.background = choice.color;
+                button.title = t(choice.name);
+                button.setAttribute('aria-label', button.title);
+                button.addEventListener('click', function () { setPreviewBg(choice.color); });
+                group.appendChild(button);
+                return { button: button, color: choice.color };
+            });
+            var pick = el('label', 'bg-swatch pick');
+            pick.title = t('previewBg.pick');
+            var input = el('input');
+            input.type = 'color';
+            input.setAttribute('aria-label', pick.title);
+            input.addEventListener('input', function () { setPreviewBg(input.value.toUpperCase()); });
+            pick.appendChild(input);
+            group.appendChild(pick);
+            preview.appendChild(group);
+
+            previewBgRenders.push(function () {
+                var custom = previewBg !== '' && !PREVIEW_BACKGROUNDS.some(function (choice) { return choice.color === previewBg; });
+                preview.style.background = previewBg; // '' brings back the checkerboard
+                swatches.forEach(function (swatch) { swatch.button.setAttribute('aria-pressed', String(swatch.color === previewBg)); });
+                pick.classList.toggle('selected', custom);
+                pick.style.background = custom ? previewBg : '';
+                if (custom) input.value = previewBg.toLowerCase();
+            });
+            previewBgRenders[previewBgRenders.length - 1]();
+            return group;
+        }
+
         // ---- overlay panels ----
 
         var PREVIEW_PAD = 16;         // px around the overlay inside the preview
@@ -821,6 +924,7 @@
             var colorNames = (card.getAttribute('data-colors') || '').split(' ').filter(Boolean);
             var iframe = card.querySelector('iframe');
             var preview = card.querySelector('.preview');
+            var bgPicker = previewBgPicker(preview);
             var obsBox = card.querySelector('.obs');
             obsBox.appendChild(document.importNode($('obs-box').content, true));
             Overlay.translate(t, obsBox);
@@ -875,14 +979,18 @@
                 return location.origin + '/' + page + (parts.length ? '?' + parts.join('&') : '');
             }
 
-            // Centers the overlay in the preview, shrunk to fit when it is too big.
+            // Centers the overlay in the preview, shrunk to fit when it is too big, and below the
+            // background picker when it would reach under it.
             function fit() {
                 var width = preview.clientWidth;
                 if (!size || !width) return; // not measured yet, or the panel is hidden
                 var scale = Math.min(1, (width - PREVIEW_PAD * 2) / size[0], PREVIEW_MAX_HEIGHT / size[1]);
-                var height = Math.max(140, Math.ceil(size[1] * scale) + PREVIEW_PAD * 2);
-                var left = Math.round((width - size[0] * scale) / 2);
-                var top = Math.round((height - size[1] * scale) / 2);
+                var shownWidth = size[0] * scale, shownHeight = size[1] * scale;
+                var left = Math.round((width - shownWidth) / 2);
+                var under = left + shownWidth > bgPicker.offsetLeft - 8;
+                var above = under ? bgPicker.offsetTop + bgPicker.offsetHeight + 8 : PREVIEW_PAD;
+                var height = Math.max(140, Math.ceil(shownHeight) + above + PREVIEW_PAD);
+                var top = above + Math.round((height - above - PREVIEW_PAD - shownHeight) / 2);
                 iframe.style.width = size[0] + 'px';
                 iframe.style.height = size[1] + 'px';
                 iframe.style.transform = 'translate(' + left + 'px, ' + top + 'px) scale(' + scale + ')';

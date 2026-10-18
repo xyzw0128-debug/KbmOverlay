@@ -30,12 +30,14 @@
         if (value && /^[0-9A-Fa-f]{6}$/.test(value)) document.documentElement.style.setProperty(COLOR_PARAMS[name], '#' + value);
     });
 
-    // ?fade=0.5 (seconds of fading after release), ?glowsize=1 (0 = no glow) and ?round=10 (px of key
-    // corner) win over the look in theme.css. The settings page builds these too.
+    // ?fade=0.5 (seconds of fading after release), ?glowsize=1 (0 = no glow), ?round=10 (px of key
+    // corner) and ?idle=1 (how much of the keys shows while not pressed, 0 = hidden) win over the look
+    // in theme.css. The settings page builds these too.
     var LOOK_PARAMS = [
         { name: 'fade', vars: ['--key-release-time', '--mouse-release-time'], unit: 's', max: 3 },
         { name: 'glowsize', vars: ['--glow-size'], unit: '', max: 3 },
-        { name: 'round', vars: ['--key-radius'], unit: 'px', max: 30 }
+        { name: 'round', vars: ['--key-radius'], unit: 'px', max: 30 },
+        { name: 'idle', vars: ['--idle-opacity'], unit: '', max: 1 }
     ];
     LOOK_PARAMS.forEach(function (look) {
         var value = parseFloat(params.get(look.name));
@@ -43,6 +45,11 @@
         value = Math.min(look.max, Math.max(0, value));
         look.vars.forEach(function (name) { document.documentElement.style.setProperty(name, value + look.unit); });
     });
+
+    // ?press=sink (pushed in while held), pop (springs up while held) or ripple (a ring spreads out).
+    // theme.css styles .press-sink / .press-pop; the pages add the ripples.
+    var press = ['sink', 'pop', 'ripple'].indexOf(params.get('press')) >= 0 ? params.get('press') : '';
+    if (press) document.documentElement.classList.add('press-' + press);
 
     function connect(want) {
         var handlers = {};
@@ -206,6 +213,17 @@
         document.documentElement.lang = t.lang;
     }
 
+    // A time from theme.css or the URL (e.g. --key-release-time: 0.5s) in ms.
+    // Animations stand still while a page is not drawn (a hidden preview on the settings page, an OBS
+    // source in another scene), so the pages also end them with timers this long; otherwise everything
+    // pressed meanwhile would play at once when the page shows again.
+    function duration(name) {
+        var value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        var amount = parseFloat(value);
+        if (!isFinite(amount)) return 0;
+        return /ms$/.test(value) ? amount : amount * 1000;
+    }
+
     function number(name, fallback, min, max) {
         var value = parseFloat(params.get(name));
         if (!isFinite(value)) return fallback;
@@ -306,6 +324,8 @@
 
     window.Overlay = {
         params: params,
+        press: press,
+        duration: duration,
         number: number,
         layoutKeys: layoutKeys,
         pickKeys: pickKeys,

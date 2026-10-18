@@ -33,6 +33,7 @@ namespace KbmOverlay
             int dev = 0;
             bool devPublic = false;
             bool export = false;
+            bool openBrowser = true;
             bool firewallCheck = false;
             bool badArgs = false;
             string lang = null;
@@ -51,6 +52,10 @@ namespace KbmOverlay
                 else if (arg == "--export-pages")
                 {
                     export = true;
+                }
+                else if (arg == "--no-browser")
+                {
+                    openBrowser = false; // e.g. when started with Windows; Enter still opens the settings page
                 }
                 else if (arg == "--firewall-check")
                 {
@@ -82,6 +87,7 @@ namespace KbmOverlay
                 Console.WriteLine(T("usage.port", ("port", DefaultPort)));
                 Console.WriteLine(T("usage.lang"));
                 Console.WriteLine(T("usage.export"));
+                Console.WriteLine(T("usage.noBrowser"));
                 return 2;
             }
 
@@ -107,11 +113,11 @@ namespace KbmOverlay
                     WaitBeforeClose();
                     return 1;
                 }
-                return Run(port ?? DefaultPort + 10 * dev, dev, devPublic, lang, exePath, pages, version);
+                return Run(port ?? DefaultPort + 10 * dev, dev, devPublic, lang, exePath, pages, version, openBrowser);
             }
         }
 
-        private static int Run(int port, int dev, bool devPublic, string cliLang, string exePath, PageStore pages, string version)
+        private static int Run(int port, int dev, bool devPublic, string cliLang, string exePath, PageStore pages, string version, bool openBrowser)
         {
             bool elevated;
             using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
@@ -236,6 +242,9 @@ namespace KbmOverlay
             Log.Info("");
 
             relay.Start();
+
+            // The settings page is the next step anyway, so it opens by itself (not with --no-browser).
+            if (openBrowser) OpenBrowser(root);
 
             if (Console.IsInputRedirected)
             {
