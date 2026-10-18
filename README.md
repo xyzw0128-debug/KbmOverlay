@@ -235,7 +235,10 @@ KbmOverlay handles key input, so here is exactly what it does and does not do.
 - **It sends nothing to the internet.** No update checks, usage statistics or error reports.
 - **It uses only these network connections:**
   - port 5520: showing the overlays and the settings page inside this PC (localhost)
-  - port 5521: only with two PCs turned on, between paired PCs on the same network (encrypted)
+  - port 5521 (UDP), looking for a streaming PC: while it is not sending to one, every KbmOverlay asks the local
+    network every 10 s, even if two PCs were never turned on. The question holds only this PC's random ID, and it
+    does not go past the router.
+  - port 5521 (TCP): only with two PCs turned on, between paired PCs on the same network (encrypted)
 - **It stores one file**, `%APPDATA%\KbmOverlay\settings.json`, with:
   - a random ID for this PC
   - whether receiving is on, and the chosen language
@@ -246,9 +249,9 @@ KbmOverlay handles key input, so here is exactly what it does and does not do.
 - The settings page remembers the menu, options, colors and keyboard keys you picked and the URLs you last copied in
   that browser (local storage for `localhost:5520`). No key input goes there; picked keys are only a list of key names.
   **Reset all settings** under **About** forgets all of it.
-- With two PCs, other KbmOverlay instances on the same network can see this PC's **computer name** (e.g.
-  `DESKTOP-ABC123`) and its random ID. While receiving is on, so can any KbmOverlay on the network that is looking
-  for a streaming PC.
+- Any device on the same network can see this PC's random ID in those questions. While receiving is on, any
+  KbmOverlay looking for a streaming PC also gets this PC's **computer name** (e.g. `DESKTOP-ABC123`). When two PCs
+  connect, their computer names and random IDs go unencrypted at the start; the input after that is encrypted.
 
 ## Security
 
